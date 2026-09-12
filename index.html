@@ -35,9 +35,11 @@ input[type=range]::-moz-range-thumb{width:19px;height:19px;border-radius:50%;bac
 .app-bg{min-height:100vh;background:var(--bg);background-image:radial-gradient(circle at 18% 12%,rgba(176,133,59,.07),transparent 45%),radial-gradient(circle at 82% 78%,rgba(var(--accent-rgb),.06),transparent 42%);position:relative;transition:background .3s}
 .hdr{position:sticky;top:0;z-index:40;backdrop-filter:blur(10px);background:rgba(var(--bg-rgb),.82);border-bottom:1px solid rgba(var(--ink-rgb),.14)}
 .hdr-in{max-width:1180px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
-.logo{display:flex;align-items:center;gap:11px;background:none;border:none;cursor:pointer;padding:0;color:var(--ink)}
-.logo .m{display:grid;place-items:center;width:34px;height:34px;border:1.5px solid var(--ink);border-radius:50%;font-family:'Newsreader',serif;font-size:19px;line-height:1}
-.logo .t{font-family:'Newsreader',serif;font-size:23px;letter-spacing:.01em;font-weight:500}
+.logo{display:flex;flex:0 0 auto;align-items:center;gap:10px;min-height:44px;white-space:nowrap;background:none;border:none;cursor:pointer;padding:0;color:var(--ink)}
+.logo .m{display:block;flex:none;width:36px;height:36px;color:var(--accent)}
+.logo .t{font-family:'Newsreader',Georgia,serif;font-size:28px;line-height:1.05;letter-spacing:-.025em;font-weight:500}
+.logo .t em{color:var(--accent);font-weight:400;transition:color .2s}
+.logo:hover .t em{color:var(--ink)}
 .hsearch-wrap{flex:1;min-width:200px;max-width:440px;display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid rgba(var(--ink-rgb),.2);border-radius:999px;padding:8px 16px;transition:border-color .25s,box-shadow .25s}
 .hsearch-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.1)}
 .hsearch-wrap input{flex:1;border:none;background:none;outline:none;font-size:16px;color:var(--ink);min-width:0}
@@ -124,13 +126,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,la
  .hdr-in>.hsearch-wrap{order:3;flex-basis:100%;max-width:none}
  .hdr-in{justify-content:space-between;gap:8px}
  .hdr-in nav{margin-left:auto;gap:0}.nav-btn{padding:8px}
- .logo .t{font-size:20px}.logo{gap:6px}.logo .m{width:28px;height:28px}
+ .logo .t{font-size:22px}.logo{gap:6px}.logo .m{width:28px;height:28px}
  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 14px}
  #main div[style*="min-width:300px"],#main div[style*="min-width:240px"]{min-width:0!important;flex-basis:100%!important}
  .filters label{min-width:100%;width:100%}
  .detail-cover{width:180px!important;margin:auto!important}
  .quote-card{padding:18px 20px}
 }
+@media(max-width:420px){.hdr-in nav>.nav-btn[data-action="home"]{display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
@@ -139,8 +142,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,la
 <div class="app-bg">
   <header class="hdr">
     <div class="hdr-in">
-      <button class="logo" data-action="home" aria-label="Za Obálkou — domů">
-        <span class="m" aria-hidden="true">Z</span><span class="t">Za&nbsp;Obálkou</span>
+      <button class="logo" data-action="home" aria-label="Za obálkou — domů">
+        <svg class="m" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 9c-4-3-9-4-14-3v23c5-1 10 0 14 3 4-3 9-4 14-3V6c-5-1-10 0-14 3Z"/><path d="M18 9v23M8 12c2.5 0 4.4.6 6 1.5M8 17c2.5 0 4.4.6 6 1.5M23 7v10l3-2 3 1V6"/></svg>
+        <span class="t">Za <em>obálkou</em></span>
       </button>
       <div class="hsearch-wrap">
         <span style="color:var(--faint);display:flex"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg></span>
