@@ -136,8 +136,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,la
 @media(max-width:420px){.hdr-in nav>.nav-btn[data-action="home"]{display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
-<link rel="stylesheet" href="theme-palette.css?v=20260912-2">
-<link rel="stylesheet" href="reader-tools.css?v=20260912-2">
+<link rel="stylesheet" href="theme-palette.css?v=20260912-3">
+<link rel="stylesheet" href="reader-tools.css?v=20260912-3">
 </head>
 <body>
 <a class="skip-link" href="#main">Přeskočit na obsah</a>
@@ -167,13 +167,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,la
 <dialog id="readerDialog" aria-labelledby="dialogTitle"></dialog>
 <div id="toastHost" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=20260912-2"></script>
-<script src="book-core.js?v=20260912-2"></script>
-<script src="catalogue-data.js?v=20260912-2"></script>
-<script src="catalogue-client.js?v=20260912-2"></script>
-<script src="qrcodegen.js?v=20260912-2"></script>
-<script src="library-tools.js?v=20260912-2"></script>
-<script src="theme-palette.js?v=20260912-2"></script>
+<script src="config.js?v=20260912-3"></script>
+<script src="book-core.js?v=20260912-3"></script>
+<script src="catalogue-data.js?v=20260912-3"></script>
+<script src="catalogue-client.js?v=20260912-3"></script>
+<script src="qrcodegen.js?v=20260912-3"></script>
+<script src="library-tools.js?v=20260912-3"></script>
+<script src="theme-palette.js?v=20260912-3"></script>
 <script>
 var Core = window.BookCore;
 (function(){
@@ -313,7 +313,7 @@ function importLibrary(file){
 /* Catalogue adapters keep source failures, works and language editions separate. */
 var Client=window.CatalogueClient, LibraryTools=window.LibraryTools;
 var SEEDS=(window.CatalogueData||{}).books||[];
-EMBEDDED=Core.merge([SEEDS,Core.linkCatalogue(EMBEDDED.map(function(b){return Object.assign({},b,{year:null,pages:0,yearKind:'original',source:'Redakční tip'});}),SEEDS)]).map(function(b){b.tags=Core.normalizeTags(b);return b;});
+EMBEDDED=Core.merge([SEEDS,Core.linkCatalogue(EMBEDDED.filter(function(b){return !SEEDS.some(function(seed){return Core.sameWork(b,seed);});}).map(function(b){return Object.assign({},b,{year:null,pages:0,yearKind:'original',source:'Redakční tip'});}),SEEDS)]).map(function(b){b.tags=Core.normalizeTags(b);return b;});
 function searchBooks(q){return Client.search(q,state.filters);}
 function searchCombo(terms){return Client.tags(terms,state.filters);}
 function loadFeatured(mode,force){return Client.featured(mode,{force:!!force});}
@@ -415,7 +415,10 @@ function cancelSearch(){clearTimeout(searchTimer);searchSeq++;state.searchLoadin
 function goHome(){setRoute(''); cancelSearch();detailSeq++; state.featured=featuredBooks(state.featured); state.view='home'; state.activeTags=[]; state.query=''; if(el('hsearch'))el('hsearch').value=''; renderMain(); window.scrollTo(0,0); }
 function goLibrary(){setRoute('#shelf');cancelSearch();detailSeq++; state.view='library'; renderMain(); window.scrollTo(0,0); }
 function openBook(id,fromRoute){
-  var base=findBook(id);if(!base)return;cancelSearch();if(state.view!=='detail')state.returnView=state.view;
+  var base=findBook(id);if(!base)return;
+  var knownChoices=state.detail&&Core.sameWork(state.detail,base)?state.detail.editions||[]:[];
+  base=Object.assign({},base,{editions:Core.merge([base.editions||[],knownChoices,SEEDS.filter(function(b){return Core.sameWork(b,base);}),[base]])});
+  cancelSearch();if(state.view!=='detail')state.returnView=state.view;
   if(!fromRoute)setRoute(LibraryTools.bookLink(base));
   state.view='detail'; state.selectedId=id; state.detail=null; state.detailLoading=true;
   state.detail=Object.assign({},base,{ratingList:buildRatings(base)});
@@ -721,7 +724,7 @@ function readingRowHTML(b){
   var pct=total?Math.min(100,Math.round(b.page/total*100)):0;
   var slider = total ? '<input type="range" data-action="slider" data-id="'+attr(b.id)+'" min="0" max="'+total+'" value="'+b.page+'" style="flex-basis:100%;margin-top:6px">' : '';
   return '<div style="display:flex;gap:20px;align-items:center;background:var(--card);border:1px solid rgba(var(--ink-rgb),.14);border-radius:14px;padding:18px;flex-wrap:wrap">'
-    +'<button data-action="open" data-id="'+attr(b.id)+'" style="flex:none;width:72px;height:108px;border:none;padding:0;cursor:pointer;border-radius:5px;overflow:hidden;background:none">'+coverHTML(b,{})+'</button>'
+    +'<button class="reading-thumb" data-action="open" data-id="'+attr(b.id)+'" style="flex:none;width:72px;height:108px;border:none;padding:0;cursor:pointer;border-radius:5px;overflow:hidden;background:none">'+coverHTML(b,{})+'</button>'
     +'<div style="flex:1;min-width:240px"><div style="font-family:\'Newsreader\',serif;font-size:21px;line-height:1.18;color:var(--ink)">'+esc(b.title)+'</div>'
     +'<div style="font-size:14.5px;color:var(--faint);margin-bottom:12px">'+esc(b.author)+'</div>'+bookMeta(b)
     +'<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:13px">'

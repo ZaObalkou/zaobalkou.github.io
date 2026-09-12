@@ -1,4 +1,8 @@
 .edition-count{display:block;color:var(--accent);margin-top:4px}
+.reading-thumb .cover{padding:9px!important;height:108px;justify-content:center}
+.reading-thumb .c-title{font-size:12px!important;line-height:1.15;overflow-wrap:normal}
+.reading-thumb .kicker,.reading-thumb .c-author,.reading-thumb .c-rule{display:none}
+.reading-thumb .frame{inset:4px}
 .edition-picker{margin:18px 0 22px;padding:16px;border:1px solid rgba(var(--accent-rgb),.25);border-radius:12px;background:var(--card)}
 .edition-picker label{display:block;font-size:15px;margin-bottom:8px;color:var(--accent)}
 .edition-picker .book-meta{margin:8px 0 0}
