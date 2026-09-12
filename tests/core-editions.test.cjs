@@ -128,3 +128,23 @@ test('plural YA taxonomy normalizes and verified editions receive a bounded rank
  assert.equal(Core.rank([other,checked],{query:'Dračí rod'})[0].id,'checked');
  const old=book('classic',{year:1850,verified:true});assert.equal(Core.rank([old,other])[0].id,'api');
 });
+
+test('cover fallback uses exact editions and keeps translations separate',()=>{
+ const cz=book('cz',{isbn:'9788025366882',workId:'fourth-wing'});
+ const exact={...cz,id:'publisher',coverUrl:'https://example.com/cs.jpg'};
+ const en={...cz,id:'en',isbn:'9781649374042',language:'en',title:'Fourth Wing',coverUrl:'https://example.com/en.jpg'};
+ const urls=Core.coverCandidates(cz,[exact,en],false);
+ assert.deepEqual(urls,['https://example.com/cs.jpg','https://covers.openlibrary.org/b/isbn/9788025366882-M.jpg?default=false']);
+ assert.equal(cz.coverUrl,undefined);
+ assert.equal(Core.coverCandidates({...cz,isbn:'',id:'unknown'},[en],false).length,0);
+});
+test('cover fallback sanitizes URLs, removes duplicates and prefers requested size',()=>{
+ const b=book('cover',{coverUrl:'https://example.com/small.jpg',coverUrlL:'https://example.com/large.jpg'});
+ assert.deepEqual(Core.coverCandidates(b,[b],true),[b.coverUrlL,b.coverUrl]);
+ assert.deepEqual(Core.coverCandidates({...b,coverUrl:'javascript:alert(1)',coverUrlL:'http://example.com/image'},[],false),[]);
+});
+test('verified Czech Fourth Wing has edition-specific publisher artwork',()=>{
+ const b=require('../catalogue-data.js').books.find(b=>b.isbn==='9788025366882');
+ assert.equal(b.language,'cs');assert.equal(b.pages,536);
+ assert.equal(b.coverUrl,'https://cdn.albatrosmedia.cz/Images/Product/89562509/?width=300&height=450');
+});
