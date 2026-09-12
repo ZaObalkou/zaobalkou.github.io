@@ -1,0 +1,16 @@
+.edition-count{display:block;color:var(--accent);margin-top:4px}
+.edition-picker{margin:18px 0 22px;padding:16px;border:1px solid rgba(var(--accent-rgb),.25);border-radius:12px;background:var(--card)}
+.edition-picker label{display:block;font-size:15px;margin-bottom:8px;color:var(--accent)}
+.edition-picker .book-meta{margin:8px 0 0}
+.source-status,.backup-tools{color:var(--muted);font-size:14px;margin:14px 0 26px}
+summary{cursor:pointer;width:fit-content;padding:6px 0}
+button:disabled{opacity:.55;cursor:default;transform:none!important}
+#readerDialog{background:var(--card);color:var(--ink);border:1px solid rgba(var(--ink-rgb),.2);border-radius:18px;width:min(560px,calc(100vw - 28px));padding:26px;max-height:90dvh;overflow:auto;box-shadow:0 24px 80px rgba(0,0,0,.25)}
+#readerDialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(3px)}
+#readerDialog h2{font:400 30px 'Newsreader',Georgia,serif;margin:4px 0 16px}
+#readerDialog p{font-size:17px;line-height:1.5}
+#readerDialog input[type=text],#readerDialog textarea{width:100%;background:var(--bg);color:var(--ink);border:1px solid rgba(var(--ink-rgb),.25);padding:10px;border-radius:8px;font:14px system-ui,sans-serif;resize:vertical}
+.dialog-close{float:right;background:none;border:0;color:var(--muted);font-size:24px;cursor:pointer;padding:0 6px}
+.transfer-qr{max-width:240px;margin:22px auto;padding:10px;background:#fff;border-radius:10px}
+.transfer-qr svg{display:block;width:100%;height:auto}
+.transfer-preview{max-height:180px;overflow:auto;padding-left:22px;font-size:16px}
