@@ -34,6 +34,16 @@
     if((a.yearKind==='original')!==(b.yearKind==='original'))return false;
     if(a.yearKind!=='original'&&b.yearKind!=='original'&&year(a.year)&&year(b.year)&&year(a.year)!==year(b.year))return false;return true;
   }
+  // Borrow images only from the same edition, never from another translation.
+  function coverCandidates(b, books, big){
+    var matches=(books||[]).filter(function(other){return sameBook(b,other);});
+    var urls=[];[b].concat(matches).forEach(function(other){
+      urls.push(big?other.coverUrlL:other.coverUrl,big?other.coverUrl:other.coverUrlL);
+    });
+    var number=isbn(b.isbn);
+    if(number)urls.push('https://covers.openlibrary.org/b/isbn/'+number+(big?'-L':'-M')+'.jpg?default=false');
+    return unique(urls.map(safeURL)).slice(0,6);
+  }
   function validRating(v){return typeof v==='number'&&Number.isFinite(v)&&v>0&&v<=5;}
   function hasGoodreads(b){return validRating(b.grRating)&&integer(b.grCount,1000000000)>0&&!!goodreadsURL(b.grUrl)&&!!checkedAt(b.grCheckedAt);}
   function rating(b){
@@ -159,5 +169,5 @@
     if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Neplatný formát knihovny.');var out=Object.create(null),ids=Object.keys(raw);if(ids.length>5000)throw new Error('Knihovna je příliš velká (maximum 5 000 knih).');
     ids.forEach(function(id){var e=raw[id];if(BAD_KEYS.includes(id)||!e||!['want','reading','read'].includes(e.status)||!e.book||typeof e.book.title!=='string'||!e.book.title.trim()||e.book.id!==id||!id||id.length>200)throw new Error('Záloha obsahuje neplatnou knihu.');var book=snapshot(e.book),pages=integer(e.pages==null?book.pages:e.pages),page=integer(e.page);if(pages)page=Math.min(page,pages);out[id]={status:e.status,page:e.status==='read'&&pages?pages:page,pages:pages,book:book};if(typeof e.pagesManual==='boolean')out[id].pagesManual=e.pagesManual;if(checkedAt(e.updatedAt))out[id].updatedAt=checkedAt(e.updatedAt);});return out;
   }
-  return{norm:norm,integer:integer,year:year,safeURL:safeURL,goodreadsURL:goodreadsURL,language:language,key:key,sameBook:sameBook,sameWork:sameWork,validRating:validRating,rating:rating,merge:merge,linkCatalogue:linkCatalogue,groupWorks:groupWorks,normalizeTags:normalizeTags,matchesTags:matchesTags,relevance:relevance,rank:rank,snapshot:snapshot,validateLibrary:validateLibrary};
+  return{coverCandidates:coverCandidates,norm:norm,integer:integer,year:year,safeURL:safeURL,goodreadsURL:goodreadsURL,language:language,key:key,sameBook:sameBook,sameWork:sameWork,validRating:validRating,rating:rating,merge:merge,linkCatalogue:linkCatalogue,groupWorks:groupWorks,normalizeTags:normalizeTags,matchesTags:matchesTags,relevance:relevance,rank:rank,snapshot:snapshot,validateLibrary:validateLibrary};
 });

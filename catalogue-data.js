@@ -11,6 +11,12 @@
   function edition(workId, common, specific) {
     const book = Object.assign({workId: 'curated:' + workId, verified: true, verifiedAt: '2026-09-12', yearKind: 'edition'}, common, specific);
     book.id = 'seed:' + book.isbn;
+    // Publisher product IDs identify the specific edition, including its cover.
+    const product = /^https:\/\/www\.albatrosmedia\.cz\/tituly\/(\d+)\//.exec(book.link || '');
+    if (product) {
+      book.coverUrl = 'https://cdn.albatrosmedia.cz/Images/Product/' + product[1] + '/?width=300&height=450';
+      book.coverUrlL = 'https://cdn.albatrosmedia.cz/Images/Product/' + product[1] + '/?width=600&height=900';
+    }
     books.push(book);
     sources.push({isbn: book.isbn, title: book.title, name: book.source, url: book.link, checkedAt: book.verifiedAt});
   }

@@ -136,8 +136,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,la
 @media(max-width:420px){.hdr-in nav>.nav-btn[data-action="home"]{display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
-<link rel="stylesheet" href="theme-palette.css?v=20260912-3">
-<link rel="stylesheet" href="reader-tools.css?v=20260912-3">
+<link rel="stylesheet" href="theme-palette.css?v=20260912-4">
+<link rel="stylesheet" href="reader-tools.css?v=20260912-4">
 </head>
 <body>
 <a class="skip-link" href="#main">Přeskočit na obsah</a>
@@ -167,13 +167,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,la
 <dialog id="readerDialog" aria-labelledby="dialogTitle"></dialog>
 <div id="toastHost" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=20260912-3"></script>
-<script src="book-core.js?v=20260912-3"></script>
-<script src="catalogue-data.js?v=20260912-3"></script>
-<script src="catalogue-client.js?v=20260912-3"></script>
-<script src="qrcodegen.js?v=20260912-3"></script>
-<script src="library-tools.js?v=20260912-3"></script>
-<script src="theme-palette.js?v=20260912-3"></script>
+<script src="config.js?v=20260912-4"></script>
+<script src="book-core.js?v=20260912-4"></script>
+<script src="catalogue-data.js?v=20260912-4"></script>
+<script src="catalogue-client.js?v=20260912-4"></script>
+<script src="qrcodegen.js?v=20260912-4"></script>
+<script src="library-tools.js?v=20260912-4"></script>
+<script src="theme-palette.js?v=20260912-4"></script>
 <script>
 var Core = window.BookCore;
 (function(){
@@ -468,17 +468,27 @@ function clearTag(){cancelSearch();detailSeq++; state.activeTags=[]; state.resul
 function loadMore(){state.shown=Math.min(state.results.length,state.shown+24);renderMain();}
 
 /* ============ render: komponenty ============ */
+function coverImageHTML(b,big,style){
+  var urls=Core.coverCandidates(b,SEEDS.concat(b.editions||[]),big);
+  if(!urls.length)return '';
+  return '<img class="cv" src="'+attr(urls.shift())+'" data-cover-fallbacks="'+attr(JSON.stringify(urls))+'" alt="" loading="lazy" style="'+attr(style||'')+'">';
+}
+document.addEventListener('error',function(event){
+  var img=event.target;if(!img||img.tagName!=='IMG'||!img.hasAttribute('data-cover-fallbacks'))return;
+  var urls;try{urls=JSON.parse(img.getAttribute('data-cover-fallbacks'));}catch(e){urls=[];}
+  var next=Array.isArray(urls)&&urls.length?Core.safeURL(urls.shift()):'';
+  if(next){img.setAttribute('data-cover-fallbacks',JSON.stringify(urls));img.src=next;}else img.remove();
+},true);
 function coverHTML(b,opts){
   opts=opts||{}; var big=opts.big;
   var pal=palette(b.id||b.title);
-  var url=Core.safeURL(big?(b.coverUrlL||b.coverUrl):b.coverUrl);
   var titleSize= big?'34px':'clamp(20px,2.2vw,25px)';
   var typo='<div class="frame"></div>'
     +'<div class="kicker">'+esc((b.tags&&b.tags[0])||'kniha')+'</div>'
     +'<div><div class="c-title" style="font-size:'+titleSize+'">'+esc(b.title)+'</div>'
     +'<div class="c-rule" style="background:'+pal[2]+'"></div>'
     +'<div class="c-author">'+esc(b.author)+'</div></div>';
-  var img = url ? '<img class="cv" src="'+attr(url)+'" alt="" loading="lazy" onerror="this.remove()" style="background:'+pal[0]+'">' : '';
+  var img = coverImageHTML(b,big,'background:'+pal[0]);
   return '<div class="cover" style="aspect-ratio:2/3;background:'+pal[0]+';color:'+pal[1]+';padding:'+(big?'34px 30px':'20px 18px')+'">'+typo+img+(opts.badge||'')+'</div>';
 }
 function starsHTML(v,size){ var f=Math.round(v); var s=''; for(var i=0;i<5;i++){ s+= i<f?'★':'☆'; } return '<span style="color:var(--accent);letter-spacing:2px;font-size:'+(size||14)+'px">'+s+'</span>'; }
@@ -565,7 +575,7 @@ function continueCardHTML(b){
   var pal=palette(b.id||b.title);
   var thumb='<div style="position:relative;width:62px;height:93px;flex:none;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:8px;text-align:center;background:'+pal[0]+';color:'+pal[1]+';box-shadow:0 3px 8px rgba(var(--ink-rgb),.25)">'
     +'<div style="font-family:\'Newsreader\',serif;font-size:11px;line-height:1.1">'+esc(b.title)+'</div>'
-    +(Core.safeURL(b.coverUrl)?'<img src="'+attr(b.coverUrl)+'" alt="" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">':'')+'</div>';
+    +coverImageHTML(b,false,'position:absolute;inset:0;width:100%;height:100%;object-fit:cover')+'</div>';
   var pagesTxt = b.pages?('strana '+b.page+' z '+b.pages+' · '+pct+' %'):('strana '+b.page);
   return '<button class="book-card" data-action="open" data-id="'+attr(b.id)+'" style="display:flex;flex-direction:row;gap:16px;align-items:center;background:var(--card);border:1px solid rgba(var(--ink-rgb),.14);border-radius:12px;padding:14px;flex:1;min-width:280px;color:var(--ink)">'
     +thumb+'<div style="flex:1;min-width:0"><div style="font-family:\'Newsreader\',serif;font-size:19px;line-height:1.2;margin-bottom:3px;color:var(--ink)">'+esc(b.title)+'</div>'
