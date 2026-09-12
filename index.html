@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Za Obálkou — objev současné knihy, young adult a romantasy. Doporučení podle nálady, vlastní knihovna a sledování čtení.">
+<title>Za Obálkou — najdi svůj další příběh</title>
+<link rel="canonical" href="https://zaobalkou.github.io/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Za Obálkou">
+<meta property="og:title" content="Za Obálkou — najdi svůj další příběh">
+<meta property="og:description" content="Objev současné knihy, young adult a romantasy. Doporučení podle nálady, vlastní knihovna a sledování čtení.">
+<meta property="og:url" content="https://zaobalkou.github.io/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F2E8D5;--bg-rgb:242,232,213;--ink:#2A2118;--ink-rgb:42,33,24;--card:#FBF4E6;--accent:#8A3324;--accent-rgb:138,51,36;--muted:#5E5142;--faint:#8A7B66;--faint2:#A8997F;--desc:#3A3025;--onaccent:#F7EFDF;--gold:#B0853B;--notice:#6b5a3a}
+body.dark{--bg:#15120E;--bg-rgb:21,18,14;--ink:#ECE3CF;--ink-rgb:236,227,207;--card:#221C15;--accent:#E08763;--accent-rgb:224,135,99;--muted:#BCAE92;--faint:#9C8F75;--faint2:#82765C;--desc:#DBD2BF;--onaccent:#1A1611;--gold:#D8AE55;--notice:#C9B68F}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'EB Garamond',Georgia,serif;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
+input{font-family:inherit}
+button{font-family:inherit}
+::selection{background:var(--accent);color:var(--onaccent)}
+input[type=number]::-webkit-inner-spin-button{opacity:.4}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:999px;background:rgba(var(--ink-rgb),.16);outline:none;margin:4px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:19px;height:19px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg);box-shadow:0 1px 4px rgba(var(--ink-rgb),.3)}
+input[type=range]::-moz-range-thumb{width:19px;height:19px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg)}
+@keyframes riseIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes popIn{0%{opacity:0;transform:scale(.92) rotate(-2deg)}60%{transform:scale(1.02) rotate(.6deg)}100%{opacity:1;transform:none}}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,18px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.app-bg{min-height:100vh;background:var(--bg);background-image:radial-gradient(circle at 18% 12%,rgba(176,133,59,.07),transparent 45%),radial-gradient(circle at 82% 78%,rgba(var(--accent-rgb),.06),transparent 42%);position:relative;transition:background .3s}
+.hdr{position:sticky;top:0;z-index:40;backdrop-filter:blur(10px);background:rgba(var(--bg-rgb),.82);border-bottom:1px solid rgba(var(--ink-rgb),.14)}
+.hdr-in{max-width:1180px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:11px;background:none;border:none;cursor:pointer;padding:0;color:var(--ink)}
+.logo .m{display:grid;place-items:center;width:34px;height:34px;border:1.5px solid var(--ink);border-radius:50%;font-family:'Newsreader',serif;font-size:19px;line-height:1}
+.logo .t{font-family:'Newsreader',serif;font-size:23px;letter-spacing:.01em;font-weight:500}
+.hsearch-wrap{flex:1;min-width:200px;max-width:440px;display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid rgba(var(--ink-rgb),.2);border-radius:999px;padding:8px 16px;transition:border-color .25s,box-shadow .25s}
+.hsearch-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.1)}
+.hsearch-wrap input{flex:1;border:none;background:none;outline:none;font-size:16px;color:var(--ink);min-width:0}
+nav{display:flex;align-items:center;gap:6px}
+.nav-btn{background:none;border:none;cursor:pointer;font-family:'EB Garamond',serif;font-size:16.5px;color:var(--muted);padding:8px 12px;border-radius:8px;transition:color .2s,background .2s}
+.nav-btn:hover{color:var(--ink);background:rgba(var(--ink-rgb),.06)}
+.icon-btn{display:grid;place-items:center;width:38px;height:38px;border-radius:9px;color:var(--muted)}
+.icon-btn:hover{color:var(--ink);background:rgba(var(--ink-rgb),.06)}
+.nav-lib{display:flex;align-items:center;gap:8px;padding:8px 14px}
+.badge{display:inline-grid;place-items:center;min-width:21px;height:21px;padding:0 6px;background:var(--accent);color:var(--onaccent);border-radius:999px;font-size:12.5px;font-family:'EB Garamond',serif}
+main{max-width:1180px;margin:0 auto;padding:0 28px 90px}
+.cover{position:relative;border-radius:5px;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 10px 24px rgba(var(--ink-rgb),.2),inset 0 0 0 1px rgba(255,255,255,.07)}
+.cover .frame{position:absolute;inset:7px;border:1px solid currentColor;opacity:.28;border-radius:3px;pointer-events:none}
+.cover img.cv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2;background:inherit}
+.book-card{background:none;border:none;padding:0;cursor:pointer;text-align:left;font-family:inherit;display:flex;flex-direction:column;gap:11px}
+.book-card .cover{aspect-ratio:2/3;padding:20px 18px;transition:transform .35s cubic-bezier(.2,.8,.3,1),box-shadow .35s;animation:riseIn .5s ease both}
+.book-card:hover .cover{transform:translateY(-9px) rotate(-1deg);box-shadow:0 22px 40px rgba(var(--ink-rgb),.32)}
+.kicker{font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;opacity:.78}
+.c-title{font-family:'Newsreader',serif;font-weight:500;font-size:clamp(20px,2.2vw,25px);line-height:1.12}
+.c-rule{width:32px;height:2px;margin:13px 0 11px}
+.c-author{font-size:14px;letter-spacing:.04em;opacity:.85;font-style:italic}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(186px,1fr));gap:34px 26px}
+.sec-head{border-bottom:1px solid rgba(var(--ink-rgb),.16);padding-bottom:12px;margin-bottom:30px}
+.sec-head h2{font-family:'Newsreader',serif;font-weight:500;font-size:27px;margin:0}
+.tag-chip{background:var(--card);border:1px solid rgba(var(--ink-rgb),.18);border-radius:999px;padding:7px 16px;font-family:'EB Garamond',serif;font-size:15.5px;color:var(--muted);cursor:pointer;transition:all .22s}
+.tag-chip:hover{background:var(--ink);color:var(--bg);border-color:var(--ink);transform:translateY(-2px)}
+.tag-active{display:flex;align-items:center;gap:8px;background:var(--accent);color:var(--onaccent);border:none;border-radius:999px;padding:7px 8px 7px 16px;font-size:15.5px;cursor:pointer;transition:opacity .2s}
+.tag-active:hover{opacity:.85}
+.mood{display:flex;align-items:baseline;gap:8px;background:var(--card);border:1px solid rgba(var(--ink-rgb),.18);border-radius:10px;padding:11px 18px;font-family:'Newsreader',serif;font-size:18px;color:var(--ink);cursor:pointer;transition:all .22s}
+.mood:hover{background:var(--ink);color:var(--bg);border-color:var(--ink);transform:translateY(-3px)}
+.spinner{width:34px;height:34px;border:3px solid rgba(var(--ink-rgb),.15);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:60px auto}
+.toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%);z-index:80;background:var(--ink);color:var(--bg);padding:14px 26px;border-radius:999px;font-size:16.5px;box-shadow:0 14px 34px rgba(var(--ink-rgb),.34);animation:toastIn .35s cubic-bezier(.2,.9,.3,1) both;display:flex;align-items:center;gap:11px}
+.toast .ck{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--gold);color:#2A2118}
+.lib-btn{display:flex;align-items:center;gap:8px;border-radius:10px;padding:11px 18px;font-family:'EB Garamond',serif;font-size:16px;cursor:pointer;transition:all .22s}
+.lib-btn:hover{transform:translateY(-2px)}
+.numin{border:1px solid rgba(var(--ink-rgb),.24);background:var(--bg);border-radius:8px;padding:6px 9px;font-size:15px;color:var(--ink);outline:none;text-align:center}
+.quote-card{max-width:620px;margin:30px auto 6px;padding:26px 30px;background:var(--card);border:1px solid rgba(var(--ink-rgb),.14);border-left:3px solid var(--accent);border-radius:12px;text-align:left;box-shadow:0 6px 20px rgba(var(--ink-rgb),.07);animation:fadeIn .6s ease both}
+.quote-label{font-size:12.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+.quote-text{font-family:'Newsreader',serif;font-style:italic;font-size:clamp(18px,2.4vw,22px);line-height:1.5;color:var(--ink);margin:0}
+.quote-author{font-size:15px;color:var(--faint);margin-top:14px;font-style:normal}
+.notice{background:var(--card);border:1px solid rgba(176,133,59,.4);border-left:3px solid var(--gold);border-radius:10px;padding:12px 16px;color:var(--notice);font-size:14.5px;margin:0 0 24px}
+.desc{font-size:19px;line-height:1.72;color:var(--desc);margin:0 0 22px;max-width:62ch;white-space:pre-line}
+.rcard{background:var(--card);border:1px solid rgba(var(--ink-rgb),.16);border-radius:12px;padding:17px 18px}
+a{color:inherit}
+
+/* ============ mobile ============ */
+@media (max-width:640px){
+main{padding:0 16px 70px}
+.hdr-in{padding:10px 14px;gap:12px}
+.hsearch-wrap{min-width:140px}
+.grid{grid-template-columns:repeat(2,1fr);gap:14px 10px}
+.book-card{gap:8px}
+.book-card .cover{padding:12px 10px}
+.book-card .kicker{font-size:9.5px}
+.book-card .c-title{font-size:clamp(13px,3.8vw,17px)!important}
+.c-author{font-size:11.5px}
+.c-rule{margin:7px 0 6px;width:22px}
+.book-card .cover .frame{inset:4px}
+.sec-head h2{font-size:22px}
+.detail-cover{width:140px!important;position:relative!important;top:auto!important;margin-bottom:0}
+}
+@media (max-width:420px){
+.grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px 8px}
+}
+
+/* Shared controls and narrow-screen fixes. */
+:root{--faint:#74634E;--faint2:#78674F}
+body.dark{--faint:#BCAE92;--faint2:#A99A80}
+.book-meta{font-size:13px;color:var(--muted);line-height:1.45;margin-top:5px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0}
+.toolbar [aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--onaccent)}
+.filters{align-items:flex-end;padding:16px;background:var(--card);border:1px solid rgba(var(--ink-rgb),.15);border-radius:12px}
+.filters label{display:flex;flex:1;min-width:150px;flex-direction:column;gap:6px;font-size:14px;color:var(--muted)}
+select{max-width:100%;width:100%;border:1px solid rgba(var(--ink-rgb),.24);background:var(--bg);color:var(--ink);padding:9px;border-radius:7px;font:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,label:focus-within{outline:3px solid var(--accent);outline-offset:4px}
+.book-card{min-width:0;color:var(--ink)}
+.book-card>.cover{width:100%}
+.c-title,.desc,.book-card{overflow-wrap:anywhere}
+.skip-link{position:fixed;top:-80px;left:12px;z-index:100;background:var(--card);padding:12px}
+.skip-link:focus{top:12px}
+.file-input{display:block;max-width:220px;font-size:13px;margin-top:5px}
+.toast{max-width:calc(100vw - 24px);width:max-content;border-radius:14px}
+@media(max-width:640px){
+ .hdr-in>.hsearch-wrap{order:3;flex-basis:100%;max-width:none}
+ .hdr-in{justify-content:space-between;gap:8px}
+ .hdr-in nav{margin-left:auto;gap:0}.nav-btn{padding:8px}
+ .logo .t{font-size:20px}.logo{gap:6px}.logo .m{width:28px;height:28px}
+ .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 14px}
+ #main div[style*="min-width:300px"],#main div[style*="min-width:240px"]{min-width:0!important;flex-basis:100%!important}
+ .filters label{min-width:100%;width:100%}
+ .detail-cover{width:180px!important;margin:auto!important}
+ .quote-card{padding:18px 20px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Přeskočit na obsah</a>
+<div class="app-bg">
+  <header class="hdr">
+    <div class="hdr-in">
+      <button class="logo" data-action="home" aria-label="Za Obálkou — domů">
+        <span class="m" aria-hidden="true">Z</span><span class="t">Za&nbsp;Obálkou</span>
+      </button>
+      <div class="hsearch-wrap">
+        <span style="color:var(--faint);display:flex"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg></span>
+        <input id="hsearch" aria-label="Hledej název nebo autora" maxlength="200" type="search" placeholder="Hledej název nebo autora" autocomplete="off">
+      </div>
+      <nav>
+        <button class="nav-btn" data-action="home">Domů</button>
+        <button class="nav-btn nav-lib" data-action="library">
+          <span style="display:flex;color:var(--accent)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3h12v18l-6-4-6 4z"></path></svg></span>
+          Knihovna <span id="libBadge"></span>
+        </button>
+        <button class="nav-btn icon-btn" data-action="theme" id="themeBtn" title="Přepnout světlý/tmavý motiv"></button>
+      </nav>
+    </div>
+  </header>
+  <main id="main" tabindex="-1"></main>
+</div>
+<div id="toastHost" role="status" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script src="book-core.js"></script>
+<script>
+var Core = window.BookCore;
+(function(){
+"use strict";
+
+/* ============ pomocné ============ */
+var PALETTES = [
+  ['#26304F','#EFE7D2','#C9A24B'],['#2E4630','#EBE4CF','#B9C29A'],['#2E3B4E','#E7ECF2','#BFD0DE'],
+  ['#6E2A2A','#F0E2C8','#D8B24A'],['#1F4E4A','#EAE3CC','#D2A24B'],['#4A2A45','#F0E0D6','#D9A6A0'],
+  ['#34506B','#EAEFF4','#E3C36B'],['#3A2A38','#ECE0D2','#C8A24B'],['#3B4A2E','#E9E6CF','#C3CB94'],
+  ['#7A3A1E','#F0E2CC','#E0B25A'],['#235049','#EDE6D0','#E0B0C0'],['#22324A','#E8E2CC','#CDA24B']
+];
+function hashStr(s){ s=String(s||''); var h=0; for(var i=0;i<s.length;i++){ h=((h<<5)-h+s.charCodeAt(i))|0; } return Math.abs(h); }
+function palette(seed){ return PALETTES[ hashStr(seed) % PALETTES.length ]; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function attr(s){ return esc(s); }
+function decodeEntities(s){
+  if(!s) return '';
+  s=s.replace(/&#x([0-9a-fA-F]+);/g,function(_,h){return String.fromCharCode(parseInt(h,16));})
+     .replace(/&#([0-9]+);/g,function(_,n){return String.fromCharCode(parseInt(n,10));});
+  try{ var t=document.createElement('textarea'); t.innerHTML=s; s=t.value; }catch(e){}
+  return s;
+}
+function cleanDesc(s){
+  s=String(s||'');
+  s=s.replace(/<\s*br\s*\/?>/gi,'\n').replace(/<\/(p|div|h[1-6]|li)>/gi,'\n').replace(/<li[^>]*>/gi,'• ').replace(/<[^>]+>/g,'');
+  s=decodeEntities(s);
+  s=s.replace(/ /g,' ').replace(/\r/g,'').replace(/[ \t]+/g,' ').replace(/ *\n */g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+  return s;
+}
+function num(n){ return String(n).replace('.',','); }
+function el(id){ return document.getElementById(id); }
+function plkn(n){ return n===1?'kniha':(n>=2&&n<=4?'knihy':'knih'); }
+function author0(b){ return String((b&&b.author)||'').split(',')[0].trim(); }
+
+/* nálady: český štítek + offline tag + anglický výraz pro Open Library */
+var MOODS = [
+  {label:'#young adult',cz:'young adult',en:'young adult'},{label:'#romantasy',cz:'romantasy',en:'romantasy'},
+  {label:'#víly', cz:'víly', en:'fairies'},{label:'#království', cz:'království', en:'kingdoms'},
+  {label:'#drak', cz:'drak', en:'dragons'},{label:'#magie', cz:'magie', en:'magic'},
+  {label:'#les', cz:'les', en:'forest'},{label:'#zima', cz:'zima', en:'winter'},
+  {label:'#romantika', cz:'romantika', en:'romance'},{label:'#pohádky', cz:'pohádky', en:'fairy tales'},
+  {label:'#dobrodružství', cz:'dobrodružství', en:'adventure'},{label:'#detektivka', cz:'detektivka', en:'detective'},
+  {label:'#fantasy', cz:'fantasy', en:'fantasy'},{label:'#čarodějnice', cz:'čarodějnice', en:'witches'},
+  {label:'#upíři', cz:'upíři', en:'vampires'},{label:'#sci-fi', cz:'sci-fi', en:'science fiction'},
+  {label:'#thriller', cz:'thriller', en:'thriller'},{label:'#historie', cz:'historie', en:'historical fiction'}
+];
+
+/* ============ záložní katalog (offline) ============ */
+var EMBEDDED = [
+  {id:'e:star',title:'Hvězdný prach',author:'Neil Gaiman',year:1999,pages:280,tags:['království','víly','hvězdy','romantika','dobrodružství'],desc:'Mladý Tristan slíbí své lásce, že jí přinese spadlou hvězdu — a vydá se za zeď, která dělí všední svět od kouzelné země Vílí.'},
+  {id:'e:uproot',title:'Zakořeněná',author:'Naomi Novik',year:2015,pages:520,tags:['les','magie','drak','čarodějnice','království'],desc:'Vesnici na okraji zkaženého Hvozdu chrání mág zvaný Drak, který si každých deset let vybírá jednu dívku.'},
+  {id:'e:silver',title:'Stříbrná nit',author:'Naomi Novik',year:2018,pages:560,tags:['zima','magie','království','hvězdy','víly'],desc:'Dcera lichváře dokáže měnit stříbro ve zlato — a tím na sebe upoutá pozornost ledového krále zimního království.'},
+  {id:'e:narnia',title:'Lev, čarodějnice a skříň',author:'C. S. Lewis',year:1950,pages:200,tags:['království','magie','zima','čarodějnice','dobrodružství'],desc:'Čtyři sourozenci projdou skříní do zasněžené země Narnie, kde vládne Bílá čarodějnice a stále je zima, ale nikdy Vánoce.'},
+  {id:'e:hobit',title:'Hobit',author:'J. R. R. Tolkien',year:1937,pages:336,tags:['drak','dobrodružství','magie','fantasy'],desc:'Spořádaný hobit Bilbo Pytlík se proti své vůli připojí k družině trpaslíků na cestě za pokladem, který hlídá drak Šmak.'},
+  {id:'e:bride',title:'Princezna nevěsta',author:'William Goldman',year:1973,pages:320,tags:['romantika','království','dobrodružství'],desc:'Krásná Buttercup ztratí svou pravou lásku na moři a má se provdat za zlého prince. Příběh plný pirátů, soubojů a pravé lásky.'},
+  {id:'e:howl',title:'Howlův kráčející hrad',author:'Diana Wynne Jones',year:1986,pages:448,tags:['magie','čarodějnice','království','romantika'],desc:'Mladou Sofii promění čarodějnice ve stařenu a ona najde útočiště v kráčejícím hradě marnivého kouzelníka Howla.'},
+  {id:'e:grimm',title:'Pohádky bratří Grimmů',author:'bratři Grimmové',year:1812,pages:720,tags:['pohádky','víly','les','fantasy'],desc:'Sebrané pohádky, jak je zapsali bratři Grimmové — temnější a divočejší, než je dnes známe.'},
+  {id:'e:forest',title:'Dcera lesa',author:'Juliet Marillier',year:1999,pages:672,tags:['les','magie','romantika','pohádky'],desc:'Sorcha je jediná dcera mezi šesti bratry. Když je zlá macecha promění v labutě, musí mlčky uplést šest košil z kopřivy.'},
+  {id:'e:wind',title:'Jméno větru',author:'Patrick Rothfuss',year:2007,pages:880,tags:['magie','dobrodružství','fantasy'],desc:'Kvothe — legendární mág, vrah a hudebník — vypráví příběh svého života až po tajemnou univerzitu, kde se vyučuje pravá magie.'},
+  {id:'e:alice',title:'Alenka v říši divů',author:'Lewis Carroll',year:1865,pages:200,tags:['dobrodružství','fantasy','magie'],desc:'Alenka se propadne za bílým králíkem do nesmyslného světa, kde mluví zvířata a Srdcová královna volá „Hlavu dolů!“.'},
+  {id:'e:peter',title:'Petr Pan',author:'J. M. Barrie',year:1911,pages:240,tags:['víly','dobrodružství','fantasy'],desc:'Chlapec, který nikdy nedospěje, odnese Wendy a její bratry do Země Nezemě. Čekají je víly, ztracení hoši i kapitán Hook.'}
+];
+// Czech fallback suggestions, editorial selection; no invented scores or trend claims.
+// year is the original publication year here, not the date of a Czech edition.
+var MODERN = [
+  {id:'e:onyx',title:'Onyxová bouře',aliases:['Onyx Storm'],author:'Rebecca Yarros',year:2025,tags:['romantasy','fantasy','drak','magie','romantika','new adult'],desc:'Třetí díl série Empyreum. Violet čekají další střety ve světě dračích jezdců.',link:'https://www.albatrosmedia.cz/tituly/91888547/onyxova-boure/'},
+  {id:'e:sunrise',title:'Úsvit sklizně',aliases:['Sunrise on the Reaping'],author:'Suzanne Collinsová',year:2025,tags:['young adult','dystopie','dobrodružství'],desc:'Návrat do Panemu v příběhu Haymitche a padesátých Hladových her.',link:'https://www.albatrosmedia.cz/tituly/95061816/usvit-sklizne/'},
+  {id:'e:rivals',title:'Božští rivalové',aliases:['Divine Rivals'],author:'Rebecca Ross',year:2023,tags:['young adult','romantasy','fantasy','romantika','magie'],desc:'Dva mladí novináři a dopisy, které je propojí uprostřed války bohů.',link:'https://www.albatrosmedia.cz/tituly/91496657/bozsti-rivalove/'},
+  {id:'e:fourth',title:'Čtvrté křídlo',aliases:['Fourth Wing'],author:'Rebecca Yarros',year:2023,tags:['romantasy','fantasy','drak','magie','romantika','new adult'],desc:'Violet vstupuje do nebezpečného výcviku dračích jezdců. První díl série Empyreum.'},
+  {id:'e:iron',title:'Železný plamen',aliases:['Iron Flame'],author:'Rebecca Yarros',year:2023,tags:['romantasy','fantasy','drak','magie','romantika','new adult'],desc:'Pokračování Čtvrtého křídla: další rok výcviku a zkoušky Violetiny důvěry.',link:'https://www.albatrosmedia.cz/tituly/89562707/zelezny-plamen/'},
+  {id:'e:heart',title:'Bylo nebylo jedno zlomené srdce',aliases:['Once Upon a Broken Heart'],author:'Stephanie Garberová',year:2021,tags:['young adult','romantasy','fantasy','romantika','magie','pohádky'],desc:'Evangeline uzavírá nebezpečnou dohodu ve světě kouzel a nenaplněných přání.',link:'https://www.palmknihy.cz/ekniha/bylo-nebylo-jedno-zlomeneho-srdce--414884'}
+];
+// The link for this edition is supplied by its publisher/distributor.
+MODERN[5].link='https://www.palmknihy.cz/ekniha/bylo-nebylo-jedno-zlomene-srdce--414884';
+EMBEDDED = MODERN.concat(EMBEDDED).map(function(b){return Object.assign({pages:0,language:'cs',yearKind:'original',firstPublishYear:b.year},b);});
+
+/* ============ stav ============ */
+var state = {
+  view:'home', query:'', activeTags:[],
+  selectedId:null, detail:null, detailLoading:false,
+  results:[], rawResults:[], shown:24, searchLoading:false, offlineSearch:false, searchFailed:0, searchTotal:0,
+  filters:{era:'all',language:'all',sort:'smart'}, discovery:'modern', featuredFailed:0, storageError:'', returnView:'home',
+  featured:[], featuredLoading:true, offlineFeatured:false,
+  lib:{}, quote:null, toast:null, _lastError:null, _focusHeader:false, _fromHero:false
+};
+var toastTimer=null, searchTimer=null, searchSeq=0, detailSeq=0;
+
+/* ============ téma ============ */
+var MOON='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>';
+var SUN='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"></path></svg>';
+function applyTheme(dark){ document.body.classList.toggle('dark',dark); var tb=el('themeBtn'); if(tb) tb.innerHTML= dark?SUN:MOON; try{localStorage.setItem('mzr_theme',dark?'dark':'light');}catch(e){} }
+function toggleTheme(){ applyTheme(!document.body.classList.contains('dark')); }
+function initTheme(){
+  var th=null; try{th=localStorage.getItem('mzr_theme');}catch(e){}
+  var dark = th==='dark' || (th===null && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  applyTheme(!!dark);
+}
+
+/* ============ localStorage ============ */
+function loadLib(){
+  try { var raw=localStorage.getItem('mzr_lib_v2'); if(raw) state.lib=Core.validateLibrary(JSON.parse(raw)); }
+  catch(e){ state.lib=Object.create(null); state.storageError='Knihovnu nelze načíst. Původní data zůstala zachována; nejdřív si stáhni jejich zálohu.'; state.storageBlocked=true; }
+}
+function saveLib(){
+  if(state.storageBlocked){ state.storageError='Původní knihovna je poškozená. Stáhni původní data a obnov platnou zálohu.'; return false; }
+  try { localStorage.setItem('mzr_lib_v2', JSON.stringify(state.lib)); state.storageError=''; return true; }
+  catch(e){ state.storageError='Změny se nepodařilo uložit. Zálohuj knihovnu před zavřením stránky.'; return false; }
+}
+var HOUR=3600000, memoryCache=new Map(), pendingRequests=new Map();
+function cacheGet(k){
+  var o=memoryCache.get(k); if(o && Date.now()<o.e) return o.v;
+  try { o=JSON.parse(localStorage.getItem('mzr_c5_'+k)); return o && Date.now()<o.e ? o.v : null; } catch(e){return null;}
+}
+function cacheSet(k,v,ttl){
+  var o={e:Date.now()+ttl,v:v}; memoryCache.set(k,o);
+  if(memoryCache.size>40) memoryCache.delete(memoryCache.keys().next().value);
+  try {
+    var keys=Object.keys(localStorage).filter(function(key){return key.indexOf('mzr_c5_')===0;});
+    keys.forEach(function(key){try {if(JSON.parse(localStorage.getItem(key)).e<Date.now()) localStorage.removeItem(key);}catch(e){localStorage.removeItem(key);}});
+    if(keys.length>=30) localStorage.removeItem(keys[0]);
+    localStorage.setItem('mzr_c5_'+k,JSON.stringify(o));
+  } catch(e){ /* Cache failures never overwrite the reader's library. */ }
+}
+function exportLibrary(raw){
+  // Keep the original backup format compatible with MeziŘádky imports.
+  var value=raw ? localStorage.getItem('mzr_lib_v2') : JSON.stringify({format:'meziradky',version:1,exportedAt:new Date().toISOString(),library:state.lib},null,2);
+  var blob=new Blob([value || '{}'],{type:'application/json'}), url=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=url; a.download=raw?'zaobalkou-puvodni-data.json':'zaobalkou-knihovna.json'; a.click(); setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+function importLibrary(file){
+  if(!file) return;
+  if(file.size>5000000){flash('Záloha je příliš velká (maximum 5 MB).'); return;}
+  file.text().then(function(text){
+    var raw=JSON.parse(text);
+    if(raw.format && (raw.format!=='meziradky' || raw.version!==1)) throw new Error('Nepodporovaná verze zálohy.');
+    var incoming=Core.validateLibrary(raw.library || raw), merged=Object.assign(Object.create(null),state.lib);
+    Object.keys(incoming).forEach(function(id){
+      // Existing progress wins. Import only missing books, including alternate source IDs.
+      if(!Object.keys(merged).some(function(k){return k===id || Core.sameBook(merged[k].book,incoming[id].book);})) merged[id]=incoming[id];
+    });
+    merged=Core.validateLibrary(merged);
+    if(state.storageBlocked){
+      // Preserve corrupt original bytes before a successful recovery can replace them.
+      localStorage.setItem('mzr_lib_recovery_'+Date.now(),localStorage.getItem('mzr_lib_v2') || '');
+    }
+    localStorage.setItem('mzr_lib_v2',JSON.stringify(merged));
+    state.lib=merged; state.storageBlocked=false; state.storageError=''; updateBadge(); renderMain(); flash('Záloha načtena. Stávající pokrok zůstal zachován.');
+  }).catch(function(e){flash('Import se nezdařil: '+e.message);});
+}
+
+/* ============ data ============ */
+function fetchJSON(url,ms){
+  if(pendingRequests.has(url)) return pendingRequests.get(url);
+  var ctrl=new AbortController(), timer;
+  var task=Promise.race([
+    fetch(url,{signal:ctrl.signal}).then(function(r){if(!r.ok) throw new Error('HTTP '+r.status);return r.json();}),
+    new Promise(function(_,reject){timer=setTimeout(function(){ctrl.abort();reject(new Error('Časový limit'));},ms||9000);})
+  ]).catch(function(e){state._lastError=e.message;return null;}).finally(function(){clearTimeout(timer);pendingRequests.delete(url);});
+  pendingRequests.set(url,task); return task;
+}
+
+/* --- Apple Books / iTunes (volné hledání názvu, české tituly) --- */
+function bigArt(u){ return u? u.replace(/\/[0-9]{2,4}x[0-9]{2,4}bb\.(jpg|jpeg|png)/i,'/600x600bb.$1') : null; }
+function mapApple(r){
+  var art=bigArt(r.artworkUrl100||r.artworkUrl60||'');
+  return Core.snapshot({
+    id:'a:'+r.trackId, source:'Apple Books', yearKind:'edition',
+    title:r.trackName||'Bez názvu',
+    author:r.artistName||'Neznámý autor',
+    year:(r.releaseDate||'').slice(0,4)||null, pages:0,
+    coverUrl:art||null, coverUrlL:art||null,
+    tags:(r.genres||[]).filter(function(g){return g&&g!=='Books'&&g!=='Knihy';}).slice(0,6),
+    desc:cleanDesc(r.description||''),
+    aRating:(typeof r.averageUserRating==='number')?r.averageUserRating:null, aCount:r.userRatingCount||0,
+    olRating:null, olCount:0, gRating:null, gCount:0, bmRating:null, bmCount:0, isbnRating:null, isbnCount:0, olEditRating:null, olEditCount:0, link:r.trackViewUrl||null
+  });
+}
+function itOne(term,country){
+  return fetchJSON('https://itunes.apple.com/search?term='+encodeURIComponent(term)+'&entity=ebook&country='+country+'&limit=60',8000)
+    .then(function(j){ return (j&&Array.isArray(j.results))? j.results.filter(function(r){return r.trackId && r.trackName;}).map(mapApple) : null; }).catch(function(){return null;});
+}
+function bundle(lists){return {books:Core.merge(lists),failed:lists.filter(function(l){return l===null;}).length,total:lists.length};}
+function searchBooks(q){
+  var k='search:'+Core.norm(q), c=cacheGet(k); if(c) return Promise.resolve(c);
+  var isbn=q.replace(/[-\s]/g,'');
+  return Promise.all([itOne(q,'CZ'),gFetch(/^(\d{10}|\d{13})$/.test(isbn)?'isbn:'+isbn:q),olSearch(q)]).then(function(lists){
+    var result=bundle(lists); if(!result.failed)cacheSet(k,result,6*HOUR);return result;
+  });
+}
+
+function appleEnrich(book){
+  return itOne(book.title+' '+author0(book),'CZ').then(function(list){return (list||[]).find(function(b){return Core.sameBook(b,book);}) || null;});
+}
+
+/* --- Open Library (nálady, kombinace; hodnocení + počet stran + obálky) --- */
+var OLF='key,title,author_name,first_publish_year,cover_i,ratings_average,ratings_count,number_of_pages_median,subject,language';
+function mapOL(d){
+  var tags=(d.subject||[]).filter(function(s){return s&&s.length<=20&&!/[0-9]/.test(s)&&s.indexOf('/')<0;}).slice(0,40);
+  var cov=d.cover_i;
+  return Core.snapshot({
+    id:d.key, firstPublishYear:d.first_publish_year||null, yearKind:'original', source:'Open Library', language:(d.language||[]).length===1?({cze:'cs',eng:'en',slo:'sk'}[d.language[0]]||''):'', title:d.title||'Bez názvu',
+    author:(d.author_name&&d.author_name.join(', '))||'Neznámý autor',
+    year:d.first_publish_year||null, pages:d.number_of_pages_median||0,
+    coverUrl:cov?('https://covers.openlibrary.org/b/id/'+cov+'-M.jpg'):null,
+    coverUrlL:cov?('https://covers.openlibrary.org/b/id/'+cov+'-L.jpg'):null,
+    tags:tags, desc:'',
+    aRating:null, aCount:0,
+    olRating:(typeof d.ratings_average==='number')?d.ratings_average:null, olCount:d.ratings_count||0,
+    gRating:null, gCount:0, bmRating:null, bmCount:0, isbnRating:null, isbnCount:0, olEditRating:null, olEditCount:0, link:null
+  });
+}
+function olSearch(query){
+  return fetchJSON('https://openlibrary.org/search.json?q='+encodeURIComponent(query)+'&lang=cs&limit=80&fields='+encodeURIComponent(OLF),8000)
+    .then(function(j){if(!j||!Array.isArray(j.docs))return null;return j.docs.filter(function(d){return d.key&&d.title;}).map(mapOL);}).catch(function(){return null;});
+}
+function subjectQuery(term){
+  if(term==='romantasy') return '(subject:fantasy AND subject:romance)';
+  if(term==='young adult') return '(subject:"young adult" OR subject:"juvenile fiction")';
+  return 'subject:"'+term.replace(/["\\]/g,' ')+'"';
+}
+function searchCombo(terms){
+  var query=terms.map(subjectQuery).join(' AND '), year=new Date().getFullYear(), key='tags:'+year+':'+query, c=cacheGet(key);
+  if(c) return Promise.resolve(c);
+  return Promise.all([olSearch(query+' AND first_publish_year:['+(year-10)+' TO '+year+']'),gFetch(terms.map(function(t){return t==='romantasy'?'subject:fantasy subject:romance':'subject:"'+t.replace(/["\\]/g,' ')+'"';}).join(' '),undefined,'newest')]).then(function(lists){
+    // Google may relax multiple terms; require subject evidence for every mood.
+    if(lists[1]) lists[1]=lists[1].filter(function(b){return matchesTags(b,terms);});
+    var r=bundle(lists);if(!r.failed)cacheSet(key,r,12*HOUR);return r;
+  });
+}
+function loadFeatured(mode,force){
+  var year=new Date().getFullYear(), key='featured:'+mode+':'+year, c=force?null:cacheGet(key);if(c)return Promise.resolve(c);
+  var topic=mode==='ya'?'(subject:"young adult" OR subject:"juvenile fiction")':mode==='romantasy'?'(subject:fantasy AND subject:romance)':'(subject:"young adult" OR subject:fantasy OR subject:romance)';
+  var google=mode==='ya'?'subject:"young adult"':mode==='romantasy'?'subject:fantasy subject:romance':'subject:fiction';
+  return Promise.all([olSearch(topic+' AND first_publish_year:['+(year-10)+' TO '+year+']'),gFetch(google,'cs','newest'),itOne(mode==='ya'?'young adult':mode==='romantasy'?'romantasy':'fantasy romance','CZ')]).then(function(lists){
+    var r=bundle(lists);if(!r.failed)cacheSet(key,r,12*HOUR);return r;
+  });
+}
+var featuredSeq=0;
+function featuredBooks(list){
+  var mode=state.discovery;
+  var books=Core.merge([list,MODERN.map(function(b){return EMBEDDED.find(function(e){return e.id===b.id;});})]);
+  books=books.filter(function(b){
+    var tags=Core.norm((b.tags||[]).join(' '));
+    if(Object.keys(state.lib).some(function(id){return Core.sameBook(state.lib[id].book,b);}))return false;
+    if(mode==='ya' && !/young adult|juvenile fiction/.test(tags)) return false;
+    if(mode==='romantasy' && !(/romantasy/.test(tags)||(/fantasy/.test(tags)&&/romance|romantika/.test(tags))))return false;
+    return true;
+  });
+  var ranked=Core.rank(books,{era:'modern'}), authors=new Map();
+  // At most two books from one author, so one series doesn't fill the page.
+  return ranked.filter(function(b){var a=Core.norm(b.author),n=authors.get(a)||0;authors.set(a,n+1);return n<2;}).slice(0,18);
+}
+function refreshFeatured(force){
+  var seq=++featuredSeq;state.featured=featuredBooks([]);state.featuredLoading=true;renderMain();
+  loadFeatured(state.discovery,force).then(function(r){
+    if(seq!==featuredSeq)return;
+    state.featured=featuredBooks(r.books);state.offlineFeatured=r.failed===r.total;state.featuredFailed=r.failed;state.featuredLoading=false;
+    if(state.view==='home')renderMain();
+  }).catch(function(){if(seq!==featuredSeq)return;state.featured=featuredBooks([]);state.offlineFeatured=true;state.featuredLoading=false;if(state.view==='home')renderMain();});
+}
+
+/* --- Google Books (vyhledávání + hodnocení) --- */
+function mapGoogle(item){
+  var v=item.volumeInfo||{};
+  var ids=v.industryIdentifiers||[]; var isbn13='';
+  for(var i=0;i<ids.length;i++){ if(ids[i].type==='ISBN_13'){ isbn13=ids[i].identifier; break; } }
+  var img=v.imageLinks?(v.imageLinks.thumbnail||v.imageLinks.smallThumbnail||null):null;
+  if(img) img=img.replace(/^http:/,'https:').replace('&edge=curl','');
+  var cov=img?img.replace('zoom=1','zoom=2'):null;
+  var covL=img?img.replace('zoom=1','zoom=3'):null;
+  return Core.snapshot({
+    id:'g:'+item.id, source:'Google Books', language:v.language||'', yearKind:'edition',
+    title:v.title||'Bez názvu',
+    author:(v.authors&&v.authors.join(', '))||'Neznámý autor',
+    year:(v.publishedDate||'').slice(0,4)||null, pages:v.pageCount||0,
+    coverUrl:cov, coverUrlL:covL,
+    desc:cleanDesc(v.description||''),
+    tags:(v.categories||[]).slice(0,6),
+    aRating:null,aCount:0, olRating:null,olCount:0,
+    gRating:(typeof v.averageRating==='number')?v.averageRating:null,
+    gCount:v.ratingsCount||0, bmRating:null,bmCount:0,
+    link:v.infoLink||null, isbn:isbn13
+  });
+}
+// Optional browser-restricted Google API key. Apple/Open Library work without it.
+function gFetch(query,language,order){
+  var key=(window.MZR_CONFIG||{}).googleBooksApiKey||'';
+  var url='https://www.googleapis.com/books/v1/volumes?q='+encodeURIComponent(query)+'&printType=books&maxResults=40&orderBy='+(order||'relevance');
+  if(language)url+='&langRestrict='+encodeURIComponent(language);
+  if(key)url+='&key='+encodeURIComponent(key);
+  return fetchJSON(url,8000).then(function(j){
+    if(!j || j.error || (!Array.isArray(j.items) && j.totalItems!==0)) return null;
+    return (j.items||[]).filter(function(b){return b.id&&b.volumeInfo&&b.volumeInfo.title;}).map(mapGoogle);
+  }).catch(function(){return null;});
+}
+function mergeBooks(lists){return Core.merge(lists);}
+var TAG_ALIASES={
+  fairies:['fairies','fairy','víly'],kingdoms:['kingdom','království'],dragons:['dragon','drak'],magic:['magic','magie'],forest:['forest','les'],winter:['winter','zima'],romance:['romance','romantika','romantasy'],
+  'fairy tales':['fairy tales','pohádky'],adventure:['adventure','dobrodružství'],detective:['detective','detektivka','mystery'],witches:['witch','čarodějnice'],vampires:['vampire','upíři'],'science fiction':['science fiction','sci fi'], 'historical fiction':['historical fiction','historie'], 'young adult':['young adult','juvenile fiction']
+};
+function matchesTags(b,terms){
+  var tags=(b.tags||[]).map(Core.norm);
+  return terms.every(function(term){
+    if(term==='romantasy')return matchesTags(b,['fantasy','romance'])||tags.includes('romantasy');
+    return (TAG_ALIASES[term]||[term]).some(function(a){return tags.some(function(t){return (' '+t+' ').includes(' '+Core.norm(a)+' ') || t===Core.norm(a);});});
+  });
+}
+
+/* offline hledání (kombinace = PRŮNIK přes české tagy) */
+function localSearch(query,tags){
+  var books=Core.merge([Object.keys(state.lib).map(function(id){return state.lib[id].book;}),EMBEDDED]);
+  if(tags&&tags.length)return books.filter(function(b){return matchesTags(b,tags);});
+  return books.filter(function(b){return Core.relevance(b,query)>0;});
+}
+function buildRatings(b){
+  return ['a','ol','g'].filter(function(p){return Core.validRating(b[p+'Rating']);}).map(function(p){
+    var n=b[p+'Rating'];return {site:{a:'Apple Books',ol:'Open Library',g:'Google Books'}[p],val:num(n.toFixed(1)),unit:'/ 5',pct:Math.round(n*20),count:Core.integer(b[p+'Count'],100000000)};
+  });
+}
+function fetchDetail(book){
+  var out=Object.assign({},book), tasks=[];
+  // Use stable provider IDs. Never attach the first vaguely similar book's ratings.
+  if(/^\/works\/OL[0-9]+W$/.test(book.id)){
+    tasks.push(fetchJSON('https://openlibrary.org'+book.id+'.json',7000).then(function(d){if(d&&d.description)out.desc=cleanDesc(typeof d.description==='string'?d.description:d.description.value);}));
+  } else if(book.id.indexOf('e:')===0){
+    tasks.push(appleEnrich(book).then(function(b){if(b){out=Core.merge([ [out],[b] ])[0];}}));
+  }
+  return Promise.all(tasks).then(function(){out.desc=out.desc||'Popis této knihy zatím není k dispozici.';out.ratingList=buildRatings(out);return out;});
+}
+
+/* ============ denní citát ============ */
+function loadQuote(){
+  // Stable Czech editorial text: no random English quote or uncertain attribution.
+  state.quote={q:'Další oblíbený příběh může začít jedinou stránkou.',a:'Za Obálkou'};
+}
+
+/* ============ knihovna ============ */
+function snapshot(b){return Core.snapshot(b);}
+function findBook(id){
+  if(state.detail && state.detail.id===id) return state.detail;
+  var all=state.results.concat(state.featured);
+  for(var i=0;i<all.length;i++){ if(all[i].id===id) return all[i]; }
+  for(var j=0;j<EMBEDDED.length;j++){ if(EMBEDDED[j].id===id) return EMBEDDED[j]; }
+  if(state.lib[id]) return state.lib[id].book;
+  return null;
+}
+function setStatus(id,status){
+  if(!['want','reading','read'].includes(status) || state.storageBlocked)return;
+  var b=findBook(id); if(!b) return;
+  var existing=Object.keys(state.lib).find(function(k){return Core.sameBook(state.lib[k].book,b);});
+  if(existing && existing!==id){id=existing;b=state.lib[id].book;}
+  var cur=state.lib[id]||{}; var page=cur.page||0; var pages=cur.pages==null?(b.pages||0):cur.pages;
+  if(status==='reading') page=cur.page||0;
+  if(status==='read') page=pages||cur.page||0;
+  state.lib[id]={status:status,page:page,pages:pages,book:snapshot(b)};
+  var saved=saveLib(); updateBadge(); renderMain();
+  if(!saved){flash('Změna je jen v paměti. Stáhni zálohu knihovny.');return;}
+  flash(status==='want'?'Přidáno do „Chci přečíst“':status==='reading'?'Označeno jako rozečtené':'Přidáno mezi přečtené');
+}
+function setPage(id,val){
+  var cur=state.lib[id]; if(!cur) return;
+  var tot=cur.pages==null?((cur.book&&cur.book.pages)||0):cur.pages;
+  var p=Core.integer(val); if(tot&&p>tot)p=tot;
+  cur.status='reading'; cur.page=p; saveLib(); renderMain();
+}
+function setTotal(id,val){
+  var cur=state.lib[id]; if(!cur) return;
+  var t=Core.integer(val); cur.pages=t; if(cur.page>t&&t>0)cur.page=t; if(cur.status==='read')cur.page=t; saveLib(); renderMain();
+}
+function sliderLive(id,val){
+  var cur=state.lib[id]; if(!cur) return;
+  var tot=cur.pages==null?((cur.book&&cur.book.pages)||0):cur.pages;
+  var p=Core.integer(val); if(tot&&p>tot)p=tot; if(p<0)p=0;
+  cur.status='reading'; cur.page=p; saveLib();
+  var pct=tot?Math.min(100,Math.round(p/tot*100)):0;
+  var q=function(sel,fn){ var ns=document.querySelectorAll(sel); for(var i=0;i<ns.length;i++) fn(ns[i]); };
+  q('[data-pnum="'+CSS.escape(id)+'"]',function(x){ x.value=p; });
+  q('[data-ppct="'+CSS.escape(id)+'"]',function(x){ x.textContent=pct+' %'; });
+  q('[data-pbar="'+CSS.escape(id)+'"]',function(x){ x.style.width=pct+'%'; });
+}
+var lastRemoved=null;
+function removeFromLib(id){
+  if(!state.lib[id])return;lastRemoved={id:id,entry:state.lib[id]};delete state.lib[id];saveLib();updateBadge();renderMain();flash('Odebráno z knihovny');
+}
+function undoRemove(){if(!lastRemoved)return;state.lib[lastRemoved.id]=lastRemoved.entry;lastRemoved=null;saveLib();updateBadge();renderMain();flash('Kniha vrácena do knihovny');}
+
+function flash(msg){ state.toast=msg; renderToast(); clearTimeout(toastTimer); toastTimer=setTimeout(function(){ state.toast=null; renderToast(); },2200); }
+
+/* ============ navigace + hledání ============ */
+function cancelSearch(){clearTimeout(searchTimer);searchSeq++;state.searchLoading=false;}
+function goHome(){ cancelSearch();detailSeq++; state.featured=featuredBooks(state.featured); state.view='home'; state.activeTags=[]; state.query=''; if(el('hsearch'))el('hsearch').value=''; renderMain(); window.scrollTo(0,0); }
+function goLibrary(){cancelSearch();detailSeq++; state.view='library'; renderMain(); window.scrollTo(0,0); }
+function openBook(id){
+  var base=findBook(id);if(!base)return;cancelSearch();state.returnView=state.view;
+  state.view='detail'; state.selectedId=id; state.detail=null; state.detailLoading=true;
+  state.detail=Object.assign({},base,{ratingList:buildRatings(base)});
+  renderMain(); window.scrollTo(0,0);
+  var seq=++detailSeq;
+  fetchDetail(base).then(function(d){ if(seq!==detailSeq||state.view!=='detail')return; state.detail=d;
+    var cur=state.lib[id]; if(cur && cur.pages==null && d.pages){ cur.pages=d.pages; saveLib(); }
+    state.detailLoading=false; renderMain(); })
+  .catch(function(){ if(seq!==detailSeq||state.view!=='detail')return; state.detail=Object.assign({},base,{desc:cleanDesc(base.desc)||'Popis se nepodařilo načíst.',ratingList:buildRatings(base)}); state.detailLoading=false; renderMain(); });
+}
+function applyFilters(){
+  state.results=Core.rank(state.rawResults,Object.assign({query:state.query},state.filters));state.shown=24;renderMain();
+}
+function runSearch(){
+  var q=state.query.trim(), tags=state.activeTags.map(function(t){return t.term;});
+  if(!q&&!tags.length){cancelSearch();state.results=[];state.rawResults=[];renderMain();return;}
+  var seq=++searchSeq;state.shown=24;state.searchLoading=true;state.offlineSearch=false;state.rawResults=[];state.results=[];renderMain();
+  var p=tags.length?searchCombo(tags):searchBooks(q);
+  p.then(function(r){
+    if(seq!==searchSeq||state.view!=='search')return;
+    state.rawResults=Core.merge([r.books,localSearch(q,tags)]);
+    state.searchFailed=r.failed;state.searchTotal=r.total;state.offlineSearch=r.failed===r.total;state.searchLoading=false;applyFilters();
+  }).catch(function(){
+    if(seq!==searchSeq||state.view!=='search')return;
+    state.rawResults=localSearch(q,tags);state.offlineSearch=true;state.searchLoading=false;applyFilters();
+  });
+}
+
+function applyQuery(){
+  var has=!!state.query.trim();
+  if(has){ state.activeTags=[]; state.view='search'; }
+  else if(state.view==='search' && !state.activeTags.length){ state.view='home'; }
+  if(state._fromHero){ var hs=el('hsearch'); if(hs) hs.value=state.query; state._focusHeader=true; state._fromHero=false; }
+  if(has){ runSearch(); } else { renderMain(); }
+}
+function onQuery(val){searchSeq++;state.query=String(val).slice(0,200); clearTimeout(searchTimer); searchTimer=setTimeout(applyQuery,350); }
+function addTag(term,label,cz){cancelSearch();detailSeq++;
+  for(var i=0;i<state.activeTags.length;i++){ if(state.activeTags[i].term===term){ return; } }
+  state.activeTags.push({term:term,label:label,cz:cz||term}); state.query=''; if(el('hsearch'))el('hsearch').value='';
+  state.view='search'; window.scrollTo(0,0); runSearch();
+}
+function searchTag(mood){ addTag(mood.en, mood.label, mood.cz); }
+function searchRaw(term,label){ addTag(term, label, term); }
+function removeTag(i){ state.activeTags.splice(i,1); if(state.activeTags.length){ runSearch(); } else { clearTag(); } }
+function clearTag(){cancelSearch();detailSeq++; state.activeTags=[]; state.results=[];state.rawResults=[]; state.query=''; if(el('hsearch'))el('hsearch').value=''; state.view='home'; renderMain(); }
+function loadMore(){state.shown=Math.min(state.results.length,state.shown+24);renderMain();}
+
+/* ============ render: komponenty ============ */
+function coverHTML(b,opts){
+  opts=opts||{}; var big=opts.big;
+  var pal=palette(b.id||b.title);
+  var url=Core.safeURL(big?(b.coverUrlL||b.coverUrl):b.coverUrl);
+  var titleSize= big?'34px':'clamp(20px,2.2vw,25px)';
+  var typo='<div class="frame"></div>'
+    +'<div class="kicker">'+esc((b.tags&&b.tags[0])||'kniha')+'</div>'
+    +'<div><div class="c-title" style="font-size:'+titleSize+'">'+esc(b.title)+'</div>'
+    +'<div class="c-rule" style="background:'+pal[2]+'"></div>'
+    +'<div class="c-author">'+esc(b.author)+'</div></div>';
+  var img = url ? '<img class="cv" src="'+attr(url)+'" alt="" loading="lazy" onerror="this.remove()" style="background:'+pal[0]+'">' : '';
+  return '<div class="cover" style="aspect-ratio:2/3;background:'+pal[0]+';color:'+pal[1]+';padding:'+(big?'34px 30px':'20px 18px')+'">'+typo+img+(opts.badge||'')+'</div>';
+}
+function starsHTML(v,size){ var f=Math.round(v); var s=''; for(var i=0;i<5;i++){ s+= i<f?'★':'☆'; } return '<span style="color:var(--accent);letter-spacing:2px;font-size:'+(size||14)+'px">'+s+'</span>'; }
+function ratingPill(b){
+  var r=Core.rating(b);if(!r)return '';
+  return '<div class="book-meta" title="'+attr(r.source)+'">'+starsHTML(r.value,12)+' '+num(r.value.toFixed(1))+' · '+esc(r.source)+(r.count?' ('+r.count+')':'')+'</div>';
+}
+function bookMeta(b){
+  var y=Core.year(b.firstPublishYear)||Core.year(b.year);
+  return '<div class="book-meta">'+(y?y+(b.firstPublishYear||b.yearKind==='original'?' · první vydání':' · vydání'):'Rok neuveden')+(b.language==='cs'?' · česky':b.language==='en'?' · anglicky':'')+'</div>';
+}
+
+function titleBlock(b){
+  return '<div><div style="font-family:\'Newsreader\',serif;font-size:17px;line-height:1.22;color:var(--ink)">'+esc(b.title)+'</div>'
+    +'<div style="font-size:13.5px;color:var(--faint);font-style:italic;margin-top:2px">'+esc(b.author)+'</div>'+bookMeta(b)+ratingPill(b)+'</div>';
+}
+function bookCardHTML(b){
+  return '<button class="book-card" data-action="open" data-id="'+attr(b.id)+'">'+coverHTML(b,{})+titleBlock(b)+'</button>';
+}
+function gridHTML(list,cls){ return '<div class="grid'+(cls?' '+cls:'')+'">'+list.map(bookCardHTML).join('')+'</div>'; }
+function spinner(){ return '<div class="spinner"></div>'; }
+
+/* ============ HOME ============ */
+function discoveryHTML(){
+  return '<div class="toolbar" aria-label="Zaměření doporučení">'+[['modern','Současné příběhy'],['ya','Young adult'],['romantasy','Romantasy']].map(function(x){return '<button class="tag-chip" aria-pressed="'+(state.discovery===x[0])+'" data-action="discover" data-mode="'+x[0]+'">'+x[1]+'</button>';}).join('')+'<button class="tag-chip" data-action="refreshFeatured">Obnovit výběr</button></div><p class="book-meta">Redakční tipy a výsledky katalogů; nejde o živý žebříček prodejnosti. Romantasy může být určena dospělým.</p>';
+}
+function filterHTML(){
+  function select(key,label,choices){return '<label>'+label+'<select data-filter="'+key+'">'+choices.map(function(c){return '<option value="'+c[0]+'"'+(state.filters[key]===c[0]?' selected':'')+'>'+c[1]+'</option>';}).join('')+'</select></label>';}
+  return '<div class="toolbar filters">'+select('sort','Řazení',[['smart','Nejlepší shoda · současné výš'],['newest','Od nejnovějších'],['rating','Hodnocení s ohledem na počet hlasů']])+select('era','Období',[['all','Všechna období'],['modern','Posledních 10 let'],['recent','Posledních 5 let']])+select('language','Jazyk vydání',[['all','Všechny jazyky'],['cs','Čeština'],['en','Angličtina']])+'</div><p class="book-meta">Rok díla, je-li znám; jinak rok vydání. Filtr jazyka zahrnuje jen potvrzená vydání. Nálady hledají přednostně současné knihy; starší titul najdeš přes název či autora.</p>';
+}
+function backupHTML(){return '<div class="toolbar"><button class="tag-chip" data-action="export">Stáhnout zálohu</button><label class="tag-chip">Obnovit ze zálohy<input id="backupImport" type="file" accept=".json,application/json" class="file-input"></label></div><p class="book-meta">Knihovna se ukládá v tomto prohlížeči. Záloha ji přenese i do jiného zařízení; import zachová stávající pokrok.</p>';}
+
+function homeHTML(){
+  var reading=shelf('reading');
+  var quote = state.quote
+    ? '<div class="quote-card"><div class="quote-label">Mezi příběhy</div><p class="quote-text">„'+esc(state.quote.q)+'“</p>'
+      + (state.quote.a?'<div class="quote-author">— '+esc(state.quote.a)+'</div>':'') +'</div>'
+    : '';
+  var heroTags=MOODS.slice(0,7).map(function(m,i){return '<button class="tag-chip" data-action="mood" data-mood="'+i+'">'+esc(m.label)+'</button>';}).join('');
+  var h='<div style="animation:fadeIn .45s ease both">'
+    +'<section style="padding:60px 0 32px;text-align:center;max-width:760px;margin:0 auto">'
+    +'<div style="font-size:15px;letter-spacing:.32em;text-transform:uppercase;color:var(--accent);margin-bottom:22px">Tvá příští kapitola čeká</div>'
+    +'<h1 style="font-family:\'Newsreader\',serif;font-weight:400;font-size:clamp(42px,7vw,72px);line-height:1.04;margin:0 0 22px;letter-spacing:-.01em">Najdi svůj další <span style="font-style:italic;color:var(--accent)">příběh</span>.</h1>'
+    +'<p style="font-size:clamp(17px,2.4vw,20px);line-height:1.6;color:var(--muted);margin:0 auto 0;max-width:540px">Současné příběhy, young adult i romantasy. Najdi oblíbeného autora nebo zkombinuj nálady a objev něco nového.</p>'
+    + quote
+    +'<div class="hsearch-wrap" style="border-width:1.5px;padding:13px 22px;max-width:520px;margin:24px auto 0;box-shadow:0 8px 28px rgba(var(--ink-rgb),.08)">'
+    +'<span style="color:var(--faint);display:flex"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg></span>'
+    +'<input id="herosearch" aria-label="Najdi knihu" maxlength="200" type="search" placeholder="Začni psát název…" autocomplete="off" style="font-size:19px" value="'+attr(state.query)+'">'
+    +'</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:26px">'+heroTags+'</div>'
+    +'</section>';
+  if(reading.length){
+    h+='<section style="margin-top:30px"><div style="display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid rgba(var(--ink-rgb),.16);padding-bottom:12px;margin-bottom:26px">'
+      +'<h2 style="font-family:\'Newsreader\',serif;font-weight:500;font-size:27px;margin:0">Pokračuj ve čtení</h2>'
+      +'<button class="nav-btn" data-action="library" style="color:var(--accent);padding:0">Celá knihovna →</button></div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:18px">'+reading.slice(0,4).map(continueCardHTML).join('')+'</div></section>';
+  }
+  h+='<section style="margin-top:54px"><div class="sec-head">'
+    +'<h2>Příběhy pro tvou další kapitolu</h2><p style="margin:6px 0 0;color:var(--muted);font-size:16px">Výběr z posledních 10 let. Knihy bez hodnocení mají také šanci.</p></div>'+discoveryHTML();
+  if(state.featuredLoading){h+='<p role="status">Doplňuji výběr o knihy z online katalogů…</p>'+gridHTML(state.featured);}
+  else {
+    if(state.offlineFeatured){ h+='<div class="notice">Online katalogy se nepodařilo načíst. Zatím tu najdeš menší redakční výběr.</div>'; }
+    if(state.featuredFailed && !state.offlineFeatured)h+='<div class="notice">Část katalogů je nedostupná. Výběr může být omezený.</div>';
+    h+= state.featured.length? gridHTML(state.featured) : '<p style="color:var(--faint)">Nepodařilo se načíst knihy.</p>';
+  }
+  h+='</section>';
+  var moods=MOODS.map(function(m,i){return '<button class="mood" data-action="mood" data-mood="'+i+'">'+esc(m.label)+'</button>';}).join('');
+  h+='<section style="margin-top:56px"><div class="sec-head"><h2>Procházej podle nálady</h2></div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:12px">'+moods+'</div></section>';
+  h+='</div>';
+  return h;
+}
+function continueCardHTML(b){
+  var pct=b.pages?Math.min(100,Math.round(b.page/b.pages*100)):0;
+  var pal=palette(b.id||b.title);
+  var thumb='<div style="position:relative;width:62px;height:93px;flex:none;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:8px;text-align:center;background:'+pal[0]+';color:'+pal[1]+';box-shadow:0 3px 8px rgba(var(--ink-rgb),.25)">'
+    +'<div style="font-family:\'Newsreader\',serif;font-size:11px;line-height:1.1">'+esc(b.title)+'</div>'
+    +(Core.safeURL(b.coverUrl)?'<img src="'+attr(b.coverUrl)+'" alt="" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">':'')+'</div>';
+  var pagesTxt = b.pages?('strana '+b.page+' z '+b.pages+' · '+pct+' %'):('strana '+b.page);
+  return '<button class="book-card" data-action="open" data-id="'+attr(b.id)+'" style="display:flex;flex-direction:row;gap:16px;align-items:center;background:var(--card);border:1px solid rgba(var(--ink-rgb),.14);border-radius:12px;padding:14px;flex:1;min-width:280px;color:var(--ink)">'
+    +thumb+'<div style="flex:1;min-width:0"><div style="font-family:\'Newsreader\',serif;font-size:19px;line-height:1.2;margin-bottom:3px;color:var(--ink)">'+esc(b.title)+'</div>'
+    +'<div style="font-size:14.5px;color:var(--faint);margin-bottom:10px">'+esc(b.author)+'</div>'
+    +'<div style="height:5px;background:rgba(var(--ink-rgb),.12);border-radius:999px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--accent);border-radius:999px"></div></div>'
+    +'<div style="font-size:13.5px;color:var(--faint);margin-top:7px">'+pagesTxt+'</div></div></button>';
+}
+
+/* ============ SEARCH ============ */
+function searchHTML(){
+  var h='<div style="animation:fadeIn .4s ease both;padding-top:44px">'
+    +'<h1 style="font-family:\'Newsreader\',serif;font-weight:400;font-size:clamp(30px,4vw,42px);margin:0 0 14px">Výsledky</h1>';
+  if(state.activeTags.length){
+    var chips=state.activeTags.map(function(t,i){return '<button class="tag-active" data-action="removeTag" data-i="'+i+'">'+esc(t.label)+'<span style="display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.22);font-size:13px">×</span></button>';}).join(' <span style="color:var(--faint2);font-size:14px">a&nbsp;zároveň</span> ');
+    var addable=MOODS.map(function(m,i){ for(var x=0;x<state.activeTags.length;x++){if(state.activeTags[x].term===m.en)return '';} return '<button class="tag-chip" data-action="mood" data-mood="'+i+'">+ '+esc(m.label)+'</button>'; }).join('');
+    h+='<div style="display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:8px">'+chips
+      +'<button data-action="clearTag" style="background:none;border:none;cursor:pointer;color:var(--faint2);font-size:14.5px;padding:6px 4px">vyčistit vše</button></div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px">'+addable+'</div>'
+      +'<p style="color:var(--faint);font-size:14px;margin:0 0 20px;font-style:italic">Hledám knihy, které mají všechny zvolené nálady zároveň.</p>';
+  }
+  h+=filterHTML();
+  if(state.searchLoading){ h+='<p style="color:var(--faint);font-size:16.5px;margin:0 0 30px">Hledám v databázi…</p>'+spinner()+'</div>'; return h; }
+  var n=state.results.length;
+  if(state.query)h+='<p>Hledáš: <strong>'+esc(state.query)+'</strong></p>';
+  h+='<p style="color:var(--faint);font-size:16.5px;margin:0 0 18px">'+n+' '+plkn(n)+(n>=100?'+':'')+' v načteném výběru</p>';
+  if(state.offlineSearch){ h+='<div class="notice">Online katalogy se nepodařilo načíst. Hledám v uložené knihovně a redakčním výběru.</div>'; }
+  if(state.searchFailed && !state.offlineSearch)h+='<div class="notice">Část katalogů se nepodařilo načíst; výsledky mohou být neúplné. <button class="tag-chip" data-action="retry">Zkusit znovu</button></div>';
+  if(state.offlineSearch)h+='<button class="tag-chip" data-action="retry">Zkusit online hledání znovu</button>';
+  if(!n && state.rawResults.length)h+='<div class="notice">Knihy byly nalezeny, ale neodpovídají filtrům. <button class="tag-chip" data-action="resetFilters">Zrušit filtry</button></div>';
+  if(n){ h+=gridHTML(state.results.slice(0,state.shown),'results');
+    if(n>state.shown){ h+='<div style="text-align:center;margin-top:30px"><button data-action="more" style="background:var(--card);border:1px solid rgba(var(--ink-rgb),.2);border-radius:10px;padding:11px 22px;font-size:16px;color:var(--muted);cursor:pointer">Načíst další</button></div>'; }
+  } else {
+    var heroTags=MOODS.slice(0,7).map(function(m,i){return '<button class="tag-chip" data-action="mood" data-mood="'+i+'">'+esc(m.label)+'</button>';}).join('');
+    var hint = state.activeTags.length>1 ? '<p style="font-size:17px;margin:0 0 22px">Tahle kombinace nálad nic nevrátila — zkus odebrat jednu náladu.</p>' : '<p style="font-size:17px;margin:0 0 22px">Zkus jiné slovo nebo se nech vést náladou.</p>';
+    h+='<div style="text-align:center;padding:60px 20px;color:var(--faint)">'
+      +'<div style="font-family:\'Newsreader\',serif;font-size:30px;font-style:italic;color:var(--ink);margin-bottom:10px">Nic jsme nenašli.</div>'
+      + hint
+      +'<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:560px;margin:0 auto">'+heroTags+'</div></div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+/* ============ DETAIL ============ */
+function detailHTML(){
+  var d=state.detail; var base=findBook(state.selectedId);
+  var b = d || base;
+  if(!b) return '<p>Kniha není k dispozici. <button data-action="home">Domů</button></p>';
+  var libId=Object.keys(state.lib).find(function(id){return id===b.id||Core.sameBook(state.lib[id].book,b);});
+  if(libId)b=Object.assign({},b,{id:libId});
+  var lib=state.lib[b.id]; var status=lib?lib.status:null; var page=lib?(lib.page||0):0;
+  var total=lib?lib.pages:(b.pages||0);
+  var pct=total?Math.min(100,Math.round(page/total*100)):0;
+  function btn(s,label,extra){
+    var on=status===s;
+    var bg=on?(s==='read'?'var(--ink)':'var(--accent)'):'var(--card)';
+    var fg=on?(s==='read'?'var(--bg)':'var(--onaccent)'):'var(--muted)';
+    var bd=on?(s==='read'?'var(--ink)':'var(--accent)'):'rgba(var(--ink-rgb),.22)';
+    return '<button class="lib-btn" data-action="status" data-id="'+attr(b.id)+'" data-status="'+s+'" style="border:1.5px solid '+bd+';background:'+bg+';color:'+fg+'">'+(extra||'')+label+'</button>';
+  }
+  var tagChips=(b.tags||[]).slice(0,8).map(function(t){return '<button class="tag-chip" data-action="tag-raw" data-term="'+attr(t)+'" data-label="#'+attr(t)+'">#'+esc(t)+'</button>';}).join('');
+  var ratings;
+  if(d){
+    if(d.ratingList && d.ratingList.length){
+      ratings=d.ratingList.map(function(r){
+        var rv=parseFloat(String(r.val).replace(',','.'));
+        var stars = (r.unit==='/ 5' && !isNaN(rv)) ? ('<div style="margin-bottom:8px">'+starsHTML(rv,16)+'</div>') : '';
+        return '<div class="rcard">'
+          +'<div style="font-size:14.5px;color:var(--faint);margin-bottom:9px">'+esc(r.site)+'</div>'
+          + stars
+          +'<div style="display:flex;align-items:baseline;gap:5px;margin-bottom:11px"><span style="font-family:\'Newsreader\',serif;font-size:30px;color:var(--ink)">'+esc(r.val)+'</span><span style="font-size:14px;color:var(--faint2)">'+esc(r.unit)+'</span></div>'
+          +'<div style="height:6px;background:rgba(var(--ink-rgb),.12);border-radius:999px;overflow:hidden"><div style="height:100%;width:'+r.pct+'%;background:var(--accent);border-radius:999px"></div></div>'
+          + (r.count?'<div style="font-size:12.5px;color:var(--faint2);margin-top:8px">'+r.count+' hodnocení</div>':'') +'</div>';
+      }).join('');
+    } else { ratings='<p style="color:var(--faint)">Pro tuto knihu se zatím nepodařilo načíst hodnocení.</p>'; }
+  } else { ratings=spinner(); }
+  var progress='';
+  if(status==='reading'){
+    progress='<div style="margin-top:20px;padding-top:20px;border-top:1px solid rgba(var(--ink-rgb),.14)">'
+      +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">'
+      +'<span style="font-size:16px;color:var(--muted)">Strana</span>'
+      +'<input type="number" class="numin" style="width:84px" data-action="page" data-id="'+attr(b.id)+'" data-pnum="'+attr(b.id)+'" value="'+page+'" min="0" max="'+(total||9999)+'">'
+      +'<span style="font-size:16px;color:var(--muted)">z</span>'
+      +'<input type="number" class="numin" style="width:84px" data-action="total" data-id="'+attr(b.id)+'" value="'+(total||'')+'" min="0" placeholder="počet">'
+      + (total?'<span data-ppct="'+attr(b.id)+'" style="margin-left:auto;font-family:\'Newsreader\',serif;font-size:18px;color:var(--accent)">'+pct+' %</span>':'')
+      +'</div>';
+    if(total){
+      progress+='<input type="range" data-action="slider" data-id="'+attr(b.id)+'" min="0" max="'+total+'" value="'+page+'">';
+    } else {
+      progress+='<p style="font-size:14px;color:var(--faint);margin:4px 0 0;font-style:italic">Počet stran se nepodařilo zjistit automaticky — zadej ho a objeví se posuvník.</p>';
+    }
+    progress+='</div>';
+  }
+  var removeBtn = lib? '<button data-action="remove" data-id="'+attr(b.id)+'" style="margin-top:16px;background:none;border:none;cursor:pointer;font-size:15px;color:var(--faint2);padding:0">Odebrat z knihovny</button>':'';
+  var appleLink = Core.safeURL(b.link)? '<a href="'+attr(b.link)+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:7px;color:var(--accent);font-size:16px;text-decoration:none;margin-bottom:30px">Otevřít u zdroje →</a>':'';
+  var h='<div style="animation:fadeIn .4s ease both;padding-top:30px">'
+    +'<button data-action="back" style="display:flex;align-items:center;gap:9px;background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:8px 0;margin-bottom:22px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>Zpět</button>'
+    +'<div style="display:flex;gap:54px;flex-wrap:wrap;align-items:flex-start">'
+    +'<div class="detail-cover" style="flex:none;width:300px;max-width:100%;position:sticky;top:96px">'
+    +'<div style="animation:popIn .6s cubic-bezier(.2,.8,.3,1) both;box-shadow:0 24px 54px rgba(var(--ink-rgb),.34);border-radius:7px;overflow:hidden">'+coverHTML(b,{big:true})+'</div></div>'
+    +'<div style="flex:1;min-width:300px">'
+    +'<h1 style="font-family:\'Newsreader\',serif;font-weight:400;font-size:clamp(34px,5vw,52px);line-height:1.06;margin:0 0 8px">'+esc(b.title)+'</h1>'
+    +'<div style="font-size:20px;color:var(--muted);font-style:italic;margin-bottom:18px">'+esc(b.author)+(Core.year(b.year)?' · '+Core.year(b.year):'')+'</div>'
+    + (tagChips?'<div style="display:flex;flex-wrap:wrap;gap:9px;margin-bottom:24px">'+tagChips+'</div>':'')
+    +'<p class="desc">'+(d?esc(b.desc||'Popis této knihy zatím není k dispozici.'):'Načítám popis…')+'</p>'
+    + appleLink
+    +'<div style="background:var(--card);border:1px solid rgba(var(--ink-rgb),.16);border-radius:14px;padding:24px;margin:0 0 36px">'
+    +'<div style="font-family:\'Newsreader\',serif;font-size:20px;margin-bottom:16px">Moje knihovna</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:10px">'
+    + btn('want','Chci přečíst','<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="margin-right:2px"><path d="M6 3h12v18l-6-4-6 4z"></path></svg>')
+    + btn('reading','Rozečteno','')
+    + btn('read','Přečteno','<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px"><polyline points="20 6 9 17 4 12"></polyline></svg>')
+    +'</div>'+progress+removeBtn+'</div>'
+    +'<div style="font-family:\'Newsreader\',serif;font-size:20px;margin-bottom:16px">Hodnocení napříč weby</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px">'+ratings+'</div>'
+    +'</div></div></div>';
+  return h;
+}
+
+/* ============ LIBRARY ============ */
+function shelf(status){
+  var out=[];
+  for(var id in state.lib){ if(state.lib[id].status===status){ var e=state.lib[id]; out.push(Object.assign({},e.book,{page:e.page||0,pages:e.pages==null?((e.book&&e.book.pages)||0):e.pages})); } }
+  return out;
+}
+function libraryHTML(){
+  var reading=shelf('reading'), want=shelf('want'), read=shelf('read');
+  var count=Object.keys(state.lib).length;
+  var h='<div style="animation:fadeIn .4s ease both;padding-top:44px">'
+    +'<h1 style="font-family:\'Newsreader\',serif;font-weight:400;font-size:clamp(34px,5vw,50px);margin:0 0 6px">Moje knihovna</h1>'
+    +'<p style="color:var(--faint);font-size:17px;margin:0 0 38px">'+count+' '+plkn(count)+' na tvých poličkách</p>'+backupHTML();
+  if(count===0){
+    h+='<div style="text-align:center;padding:64px 20px;background:var(--card);border:1px dashed rgba(var(--ink-rgb),.22);border-radius:16px">'
+      +'<div style="font-family:\'Newsreader\',serif;font-size:28px;font-style:italic;margin-bottom:10px">Tvoje poličky jsou zatím prázdné.</div>'
+      +'<p style="font-size:17px;color:var(--faint);margin:0 0 22px">Najdi si knihu a přidej ji do knihovny.</p>'
+      +'<button data-action="home" style="background:var(--accent);color:var(--onaccent);border:none;border-radius:10px;padding:12px 26px;font-size:17px;cursor:pointer">Objevovat knihy</button></div></div>';
+    return h;
+  }
+  if(reading.length){
+    h+='<section style="margin-bottom:46px"><h2 style="font-family:\'Newsreader\',serif;font-weight:500;font-size:24px;margin:0 0 20px;display:flex;align-items:baseline;gap:11px">Rozečtené<span style="font-size:15px;color:var(--faint2)">'+reading.length+'</span></h2>'
+      +'<div style="display:flex;flex-direction:column;gap:16px">'+reading.map(readingRowHTML).join('')+'</div></section>';
+  }
+  if(want.length){
+    h+='<section style="margin-bottom:46px"><h2 style="font-family:\'Newsreader\',serif;font-weight:500;font-size:24px;margin:0 0 22px;display:flex;align-items:baseline;gap:11px">Chci přečíst<span style="font-size:15px;color:var(--faint2)">'+want.length+'</span></h2>'
+      +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:30px 22px">'+want.map(wantCardHTML).join('')+'</div></section>';
+  }
+  if(read.length){
+    h+='<section><h2 style="font-family:\'Newsreader\',serif;font-weight:500;font-size:24px;margin:0 0 22px;display:flex;align-items:baseline;gap:11px">Přečtené<span style="font-size:15px;color:var(--faint2)">'+read.length+'</span></h2>'
+      +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:30px 22px">'+read.map(readCardHTML).join('')+'</div></section>';
+  }
+  h+='</div>';
+  return h;
+}
+function readingRowHTML(b){
+  var total=b.pages||0;
+  var pct=total?Math.min(100,Math.round(b.page/total*100)):0;
+  var slider = total ? '<input type="range" data-action="slider" data-id="'+attr(b.id)+'" min="0" max="'+total+'" value="'+b.page+'" style="flex-basis:100%;margin-top:6px">' : '';
+  return '<div style="display:flex;gap:20px;align-items:center;background:var(--card);border:1px solid rgba(var(--ink-rgb),.14);border-radius:14px;padding:18px;flex-wrap:wrap">'
+    +'<button data-action="open" data-id="'+attr(b.id)+'" style="flex:none;width:72px;height:108px;border:none;padding:0;cursor:pointer;border-radius:5px;overflow:hidden;background:none">'+coverHTML(b,{})+'</button>'
+    +'<div style="flex:1;min-width:240px"><div style="font-family:\'Newsreader\',serif;font-size:21px;line-height:1.18;color:var(--ink)">'+esc(b.title)+'</div>'
+    +'<div style="font-size:14.5px;color:var(--faint);margin-bottom:12px">'+esc(b.author)+'</div>'
+    +'<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:13px">'
+    +'<span style="font-size:15px;color:var(--muted)">Strana</span>'
+    +'<input type="number" class="numin" style="width:74px" data-action="page" data-id="'+attr(b.id)+'" data-pnum="'+attr(b.id)+'" value="'+b.page+'" min="0" max="'+(total||9999)+'">'
+    +'<span style="font-size:15px;color:var(--muted)">z</span>'
+    +'<input type="number" class="numin" style="width:74px" data-action="total" data-id="'+attr(b.id)+'" value="'+(total||'')+'" min="0" placeholder="stran">'
+    + (total?'<span data-ppct="'+attr(b.id)+'" style="font-size:15px;color:var(--muted)">'+pct+' %</span>':'')
+    +'<button data-action="status" data-id="'+attr(b.id)+'" data-status="read" style="margin-left:auto;display:flex;align-items:center;gap:7px;background:var(--ink);color:var(--bg);border:none;border-radius:8px;padding:8px 15px;font-size:15px;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>Dočteno</button>'
+    +'<button data-action="remove" data-id="'+attr(b.id)+'" style="background:none;border:none;cursor:pointer;color:var(--faint2);font-size:20px;line-height:1;padding:4px 8px">×</button>'
+    + slider
+    +'</div></div></div>';
+}
+function wantCardHTML(b){
+  return '<div style="display:flex;flex-direction:column;gap:11px">'
+    +'<button data-action="open" data-id="'+attr(b.id)+'" class="book-card">'+coverHTML(b,{})+'</button>'+titleBlock(b)
+    +'<div style="display:flex;gap:8px">'
+    +'<button data-action="status" data-id="'+attr(b.id)+'" data-status="reading" style="flex:1;background:var(--card);border:1px solid rgba(var(--ink-rgb),.2);border-radius:8px;padding:8px;font-size:14px;color:var(--muted);cursor:pointer">Začít číst</button>'
+    +'<button data-action="remove" data-id="'+attr(b.id)+'" style="background:none;border:1px solid rgba(var(--ink-rgb),.2);border-radius:8px;cursor:pointer;color:var(--faint2);font-size:18px;line-height:1;padding:0 12px">×</button>'
+    +'</div></div>';
+}
+function readCardHTML(b){
+  var badge='<div style="position:absolute;top:12px;right:12px;z-index:3;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.7);color:#2A2118"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"></polyline></svg></div>';
+  return '<div style="display:flex;flex-direction:column;gap:11px">'
+    +'<button data-action="open" data-id="'+attr(b.id)+'" class="book-card">'+coverHTML(b,{badge:badge})+'</button>'+titleBlock(b)
+    +'<button data-action="remove" data-id="'+attr(b.id)+'" style="background:none;border:none;cursor:pointer;color:var(--faint2);font-size:14px;padding:0;text-align:left">Odebrat</button></div>';
+}
+
+/* ============ render ============ */
+function renderMain(){
+  var focused=document.activeElement, heroFocused=focused && focused.id==='herosearch', caret=heroFocused?focused.selectionStart:null;
+  var html;
+  if(state.view==='search') html=searchHTML();
+  else if(state.view==='detail') html=detailHTML();
+  else if(state.view==='library') html=libraryHTML();
+  else html=homeHTML();
+  el('main').innerHTML=(state.storageError?'<div class="notice" role="alert">'+esc(state.storageError)+' <button class="tag-chip" data-action="exportRaw">Stáhnout původní data</button> <button class="tag-chip" data-action="export">Záloha aktuální knihovny</button></div>':'')+html;
+  document.querySelectorAll('[data-action="page"]').forEach(function(x){x.setAttribute('aria-label','Aktuální strana');});
+  document.querySelectorAll('[data-action="total"]').forEach(function(x){x.setAttribute('aria-label','Celkový počet stran');});
+  document.querySelectorAll('[data-action="slider"]').forEach(function(x){x.setAttribute('aria-label','Pokrok čtení');});
+  document.querySelectorAll('[data-action="remove"]').forEach(function(x){x.setAttribute('aria-label','Odebrat z knihovny');});
+  if(heroFocused && state.view==='home' && el('herosearch')){el('herosearch').focus();try{el('herosearch').setSelectionRange(caret,caret);}catch(e){}}
+  if(state._focusHeader){ var hs=el('hsearch'); if(hs){ hs.focus(); try{ hs.setSelectionRange(hs.value.length,hs.value.length); }catch(e){} } state._focusHeader=false; }
+}
+function updateBadge(){ var c=Object.keys(state.lib).length; el('libBadge').innerHTML = c>0 ? '<span class="badge">'+c+'</span>' : ''; }
+function renderToast(){
+  el('toastHost').innerHTML = state.toast
+    ? '<div class="toast"><span class="ck"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"></polyline></svg></span>'+esc(state.toast)+(lastRemoved?'<button class="tag-chip" data-action="undo">Vrátit</button>':'')+'</div>'
+    : '';
+}
+
+/* ============ události ============ */
+document.addEventListener('click',function(e){
+  var t=e.target.closest('[data-action]'); if(!t) return;
+  var a=t.getAttribute('data-action');
+  if(a==='slider'||a==='page'||a==='total') return;
+  if(a==='home') goHome();
+  else if(a==='theme') toggleTheme();
+  else if(a==='back'){detailSeq++;state.view=state.returnView==='library'?'library':(state.activeTags.length||state.query?'search':'home');if(state.view==='search'&&!state.rawResults.length)runSearch();else renderMain();}
+  else if(a==='library') goLibrary();
+  else if(a==='open') openBook(t.getAttribute('data-id'));
+  else if(a==='mood') searchTag(MOODS[parseInt(t.getAttribute('data-mood'),10)]);
+  else if(a==='tag-raw') searchRaw(t.getAttribute('data-term'), t.getAttribute('data-label'));
+  else if(a==='removeTag') removeTag(parseInt(t.getAttribute('data-i'),10));
+  else if(a==='clearTag') clearTag();
+  else if(a==='more')loadMore();
+  else if(a==='retry')runSearch();
+  else if(a==='resetFilters'){state.filters={era:'all',language:'all',sort:'smart'};applyFilters();}
+  else if(a==='discover'){state.discovery=t.getAttribute('data-mode');refreshFeatured();}
+  else if(a==='refreshFeatured')refreshFeatured(true);
+  else if(a==='export')exportLibrary(false);
+  else if(a==='exportRaw')exportLibrary(true);
+  else if(a==='undo')undoRemove();
+  else if(a==='status') setStatus(t.getAttribute('data-id'),t.getAttribute('data-status'));
+  else if(a==='remove') removeFromLib(t.getAttribute('data-id'));
+});
+document.addEventListener('input',function(e){
+  var a=e.target.getAttribute&&e.target.getAttribute('data-action');
+  if(e.target.id==='hsearch'){ state._fromHero=false; onQuery(e.target.value); }
+  else if(e.target.id==='herosearch'){ state._fromHero=true; onQuery(e.target.value); }
+  else if(a==='slider'){ sliderLive(e.target.getAttribute('data-id'), e.target.value); }
+});
+document.addEventListener('change',function(e){
+  var a=e.target.getAttribute&&e.target.getAttribute('data-action');
+  if(e.target.id==='backupImport'){importLibrary(e.target.files[0]);e.target.value='';}
+  else if(e.target.dataset.filter){state.filters[e.target.dataset.filter]=e.target.value;applyFilters();}
+  else if(a==='page'){ setPage(e.target.getAttribute('data-id'), e.target.value); }
+  else if(a==='total'){ setTotal(e.target.getAttribute('data-id'), e.target.value); }
+  else if(a==='slider'){ renderMain(); }
+});
+document.addEventListener('keydown',function(e){
+  if((e.target.id==='hsearch'||e.target.id==='herosearch') && e.key==='Enter'){ clearTimeout(searchTimer); state._fromHero=(e.target.id==='herosearch'); applyQuery(); }
+});
+window.addEventListener('storage',function(e){if(e.key==='mzr_lib_v2'){state.storageBlocked=false;state.storageError='';loadLib();updateBadge();renderMain();}});
+
+/* ============ start ============ */
+initTheme();
+loadLib();
+loadQuote();
+updateBadge();
+refreshFeatured();
+
+})();
+</script>
+</body>
+</html>
