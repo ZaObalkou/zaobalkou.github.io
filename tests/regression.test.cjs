@@ -8,6 +8,7 @@ const Core = require('../book-core.js');
 const CatalogueClient = require('../catalogue-client.js');
 const CatalogueData = require('../catalogue-data.js');
 const LibraryTools = require('../library-tools.js');
+const BookShelf = require('../bookshelf.js');
 const html = fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
 const script = html.match(/<script>\n([\s\S]*?)<\/script>/)[1];
 const book = (id,title,year,extra={}) => ({id,title,year,author:'Autor',tags:[],...extra});
@@ -34,12 +35,12 @@ function boot({fetcher=()=>Promise.resolve({ok:false,status:503,json:async()=>({
   const store={...storage};
   const localStorage={getItem:k=>store[k]??null,setItem(k,v){if(failWrites)throw new Error('QuotaExceededError');store[k]=v;},removeItem(k){delete store[k];}};
   const location=new URL('https://zaobalkou.github.io/'+hash);
-  const window={BookCore:Core,CatalogueData,LibraryTools,MZR_CONFIG:config,location,history:{pushState(_a,_b,url){location.href=new URL(url,location).href;}},scrollTo(){},matchMedia:()=>({matches:false}),addEventListener(name,fn){windowEvents[name]=fn;},console};
+  const window={BookCore:Core,CatalogueData,LibraryTools,BookShelf,MZR_CONFIG:config,location,history:{pushState(_a,_b,url){location.href=new URL(url,location).href;}},scrollTo(){},matchMedia:()=>({matches:false}),addEventListener(name,fn){windowEvents[name]=fn;},console};
   window.CatalogueClient=CatalogueClient.create({core:Core,data:CatalogueData,config,fetch:fetcher,storage:localStorage,requestGap:0,timeout:500,origin:location.origin});
   const context=vm.createContext({window,document:doc,localStorage,navigator:{},fetch:fetcher,AbortController,URL,Blob,Map,Set,Date,CSS:{escape:x=>x},console,
     setTimeout(fn,ms){let id=++timerId;timers.set(id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id)});
   // Expose lexical bindings only in this test copy, never in the delivered page.
-  const instrument=script.replace(/\}\)\(\);\s*$/,`window.testAPI={state,runSearch,onQuery,applyQuery,goHome,goLibrary,openBook,setStatus,removeFromLib,undoRemove,importLibrary,refreshFeatured,localSearch,searchBooks,searchCombo,loadFeatured,buildRatings,fetchDetail,loadMore,renderMain,applyFilters,routeFromHash,attr,EMBEDDED};})();`);
+  const instrument=script.replace(/\}\)\(\);\s*$/,`window.testAPI={state,runSearch,onQuery,applyQuery,goHome,goLibrary,openBook,setStatus,removeFromLib,undoRemove,refreshFeatured,localSearch,searchBooks,searchCombo,loadFeatured,buildRatings,fetchDetail,loadMore,renderMain,applyFilters,routeFromHash,attr,EMBEDDED};})();`);
   vm.runInContext(instrument,context,{filename:'index.html'});
   return {api:window.testAPI,store,timers,events,windowEvents,doc,window,downloads,main:()=>doc.getElementById('main').innerHTML,dialog:()=>doc.getElementById('readerDialog').innerHTML,
     click(action,data={}){element('',{'data-action':action,...data}).dispatch('click');},
@@ -168,12 +169,12 @@ test('corrupted storage is retained and storage quota errors are visible',async(
   const b=boot({failWrites:true});await flush();b.click('status',{'data-id':CS_DRAGONS,'data-status':'reading'});
   assert.match(b.main(),/Změny se nepodařilo uložit/);assert.match(b.api.state.toast,/jen v paměti/);
 });
-test('legacy JSON import adds missing books while preserving current progress',async()=>{
-  const a=boot();await flush();a.click('status',{'data-id':CS_DRAGONS,'data-status':'reading'});a.field('input','page',CS_DRAGONS,42);
-  const original=a.api.state.lib[CS_DRAGONS];
-  a.api.importLibrary({size:500,text:async()=>JSON.stringify({format:'meziradky',version:1,library:{[CS_DRAGONS]:{...original,page:1},x:{book:book('x','Import',2025),status:'want',pages:200,page:0}}})});await flush();
-  assert.equal(a.api.state.lib[CS_DRAGONS].page,42);assert.equal(a.api.state.lib.x.book.title,'Import');
-  const before=a.store.mzr_lib_v2;a.api.importLibrary({size:1,text:async()=>'{oops'});await flush();assert.equal(a.store.mzr_lib_v2,before);
+test('shelf and overview show the same saved edition and preserve reading progress',async()=>{
+  const a=boot();await flush();a.click('status',{'data-id':CS_DRAGONS,'data-status':'reading'});a.field('input','page',CS_DRAGONS,42);a.click('library');
+  const before=a.store.mzr_lib_v2;
+  assert.match(a.main(),/shelf-spine/);assert.match(a.main(),/42 \/ 400 stran/);assert.doesNotMatch(a.main(),/Další možnosti uložení|backupImport/);
+  a.click('libraryView',{'data-mode':'overview'});assert.match(a.main(),/data-action="slider"/);
+  a.click('libraryView',{'data-mode':'shelf'});assert.match(a.main(),/shelf-spine/);assert.equal(a.store.mzr_lib_v2,before);
 });
 test('transfer hash displays a preview without automatic import, then merges only after a click',async()=>{
   const incoming={x:{book:book('x','Přenesená kniha',2025,{language:'en'}),status:'reading',pages:200,page:36,pagesManual:true}};
@@ -201,7 +202,7 @@ test('a book deep link opens its specific language edition without adding it to 
 test('detail back returns to library and export actions are available',async()=>{
   const a=boot();await flush();a.click('status',{'data-id':CS_DRAGONS,'data-status':'want'});a.click('library');a.click('open',{'data-id':CS_DRAGONS});await flush();a.click('back');
   assert.equal(a.api.state.view,'library');assert.match(a.main(),/Přenést knihovnu/);assert.match(a.main(),/Stáhnout tabulku Excel/);
-  assert.match(a.main(),/<details class="backup-tools">/);a.click('excel');assert.equal(a.downloads.at(-1).download,'za-obalkou-knihovna.xlsx');
+  assert.doesNotMatch(a.main(),/Další možnosti uložení|backupImport/);a.click('excel');assert.equal(a.downloads.at(-1).download,'za-obalkou-knihovna.xlsx');
 });
 test('year and language select events filter the edition and reset restores all available versions',async()=>{
   const a=boot();await flush();a.query('Rod draků');await flush();a.change('year','2020');await flush();a.change('language','en');await flush();
@@ -228,4 +229,18 @@ test('Rival Darling has browseable romance and hockey tags, and combination sear
 test('young-adult mode excludes adult romantasy seeds',async()=>{
   const a=boot();await flush();a.click('discover',{'data-mode':'ya'});await flush();
   assert(a.api.state.featured.length>0);assert(a.api.state.featured.every(b=>Core.matchesTags(b,['young adult'])));assert(!a.api.state.featured.some(b=>b.title==='Čtvrté křídlo'));
+});
+
+test('typed hashtag aliases run the same search, repeated Enter preserves filters, and invalid fragments are explained',async()=>{
+ const a=boot();await flush();a.query('#youngadult #fantasy');await flush();
+ assert.deepEqual(Array.from(a.api.state.activeTags,t=>t.term),['young adult','fantasy']);
+ assert(a.api.state.results.length>0);assert(a.api.state.results.every(b=>Core.matchesTags(b,['young adult','fantasy'])));
+ const ids=Array.from(a.api.state.results,b=>b.id);a.events.keydown({target:a.doc.getElementById('hsearch'),key:'Enter'});await flush();assert.deepEqual(Array.from(a.api.state.results,b=>b.id),ids);
+ a.query('#young adult #fantasy');await flush();assert.deepEqual(Array.from(a.api.state.results,b=>b.id),ids);
+ a.query('#young #adult');await flush();assert.equal(a.api.state.results.length,0);assert.match(a.main(),/Neznámé štítky/);
+ a.query('Rod draků');await flush();assert.equal(a.api.state.results[0].title,'Rod draků');assert.equal(a.api.state.unknownTags.length,0);
+});
+test('typed author plus hashtags respects both the query and every tag',async()=>{
+ const a=boot();await flush();a.query('Sarah J. Maas #romantasy');await flush();
+ assert(a.api.state.results.length>0);assert(a.api.state.results.every(b=>Core.relevance(b,'Sarah J. Maas')>0&&Core.matchesTags(b,['romantasy'])));
 });
