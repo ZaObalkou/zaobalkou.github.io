@@ -20,7 +20,7 @@
 
 Prostředí kombinuje fotorealistické obrazové podklady, prostorové knižní prvky CSS a transparentní Three.js vrstvu světla a prachu. Jemný pohyb podle myši posouvá společně pozadí i skutečné ovládací prvky. Jde o řízené prostorové scény, nikoli o model celé budovy pro volné procházení. Three.js se načte pouze při zapnutém realismu; vypnutí uvolní grafické prostředky. Neaktivní karta animaci pozastaví, dotyk nepotřebuje najetí myší a omezení pohybu je respektováno. Při nedostupném WebGL zůstávají obrazové prostředí, knihy, pohyb podle myši i všechny ovládací prvky funkční; chybí pouze grafická vrstva světelných paprsků a prachu. Po ustálení pohybu tato náhradní cesta nespouští další animační snímky.
 
-Obrazové materiály vznikly pro tento projekt pomocí generování a návazných materiálových úprav. WebP soubory zachovávají původní rozměry; PNG pracovní originály nejsou potřebné pro běh. Three.js 0.180.0 je uložen místně v `vendor/` včetně licence MIT, nevyžaduje externí CDN.
+Scény a materiály dřeva vznikly pro tento projekt pomocí generování a návazných materiálových úprav. WebP soubory zachovávají původní rozměry; PNG pracovní originály nejsou potřebné pro běh. Knižní přebaly pocházejí z katalogů a nakladatelství. `assets/cover-9788027740185.jpg` je nezměněný přebal konkrétního českého vydání z Našeho nakladatelství; zdroj a ISBN jsou v `catalogue-data.js`. Three.js 0.180.0 je uložen místně v `vendor/` včetně licence MIT, nevyžaduje externí CDN.
 
 ## Datové zdroje a jejich hranice
 

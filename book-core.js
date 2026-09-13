@@ -190,11 +190,18 @@
     });
     var representatives=groups.map(function(group){
       var filtered=rank(group,options);if(!filtered.length)return null;
+      var representative=filtered[0],settings=options||{};
+      // The newest store record may omit both its language and page count.
+      // In the default view, open a fully identified edition when one is known.
+      // Explicit ISBN searches and user-selected sorts keep their exact choice.
+      if(!language(representative.language)&&!integer(representative.pages)&&settings.sort!=='newest'&&settings.sort!=='rating'&&!(isbn(settings.query)&&isbn(settings.query)===isbn(representative.isbn))){
+        representative=filtered.find(function(b){return language(b.language)&&integer(b.pages)>0&&b.yearKind!=='original'&&year(b.year)&&(isbn(b.isbn)||/^\/books\/OL\d+M$/.test(b.olEditionId||b.editionId||''));})||representative;
+      }
       // Open Library rates the work, while Apple and Google rate specific records.
       var workRating=group.filter(function(b){return validRating(b.olRating);}).sort(function(a,b){return integer(b.olCount,1000000000)-integer(a.olCount,1000000000);})[0];
       var goodreadsWork=group.filter(function(b){return hasGoodreads(b)&&b.grScope==='work';}).sort(function(a,b){return Date.parse(b.grCheckedAt)-Date.parse(a.grCheckedAt);})[0];
       function editionCopy(b){var edition=copyBook(b);edition.tags=normalizeTags(edition);if(workRating){edition.olRating=workRating.olRating;edition.olCount=integer(workRating.olCount,1000000000);}if(goodreadsWork&&(!hasGoodreads(edition)||Date.parse(goodreadsWork.grCheckedAt)>Date.parse(edition.grCheckedAt)))copyGoodreads(edition,goodreadsWork);return edition;}
-      var selected=editionCopy(filtered[0]);selected.editions=rank(group,{query:options&&options.query}).map(editionCopy);return selected;
+      var selected=editionCopy(representative);selected.editions=rank(group,{query:options&&options.query}).map(editionCopy);return selected;
     }).filter(Boolean);return rank(representatives,options);
   }
   function snapshot(b){

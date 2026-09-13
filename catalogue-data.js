@@ -172,7 +172,9 @@
     year: 2024, firstPublishYear: 2021, pages: 372, language: 'cs', isbn: '9788027740185', series: 'Bylo nebylo jedno zlomené srdce', seriesNumber: 1,
     tags: ['young adult', 'romantasy', 'fantasy', 'romantika', 'magie', 'pohádky'],
     desc: 'Evangelína chce zabránit svatbě své lásky a uzavírá dohodu se Srdcovým princem. Za jeho pomoc slíbí tři polibky, jejichž následky zatím nedokáže odhadnout.',
-    source: 'Naše nakladatelství', link: 'https://www.nasenakladatelstvi.cz/produkt/bylo-nebylo-jedno-zlomene-srdce'
+    source: 'Naše nakladatelství', link: 'https://www.nasenakladatelstvi.cz/produkt/bylo-nebylo-jedno-zlomene-srdce',
+    coverUrl: 'https://zaobalkou.github.io/assets/cover-9788027740185.jpg',
+    coverUrlL: 'https://storage.nasenakladatelstvi.cz/products/8451.jpg'
   }, {});
 
   // Czech science-fiction editions: publisher metadata and the publisher group's
