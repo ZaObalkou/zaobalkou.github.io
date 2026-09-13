@@ -134,10 +134,12 @@ select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(v
 @media(max-width:420px){.hdr-in nav>.nav-btn[data-action="home"]{display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
-<link rel="stylesheet" href="theme-palette.css?v=20260913-7">
-<link rel="stylesheet" href="reader-tools.css?v=20260913-7">
-<link rel="stylesheet" href="bookshelf.css?v=20260913-7">
-<link rel="stylesheet" href="polish.css?v=20260913-7">
+<link rel="stylesheet" href="theme-palette.css?v=20260913-8">
+<link rel="stylesheet" href="reader-tools.css?v=20260913-8">
+<link rel="stylesheet" href="bookshelf.css?v=20260913-8">
+<link rel="stylesheet" href="polish.css?v=20260913-8">
+<link rel="stylesheet" href="appearance.css?v=20260913-8">
+<link rel="stylesheet" href="realism.css?v=20260913-8">
 </head>
 <body>
 <a class="skip-link" href="#main">Přeskočit na obsah</a>
@@ -158,26 +160,32 @@ select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(v
           <span style="display:flex;color:var(--accent)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3h12v18l-6-4-6 4z"></path></svg></span>
           Knihovna <span id="libBadge"></span>
         </button>
-        <button class="nav-btn icon-btn" data-action="theme" id="themeBtn" title="Přepnout světlý/tmavý motiv"></button>
+        <span id="appearanceHome"><button class="nav-btn appearance-toggle" id="appearanceBtn" type="button"></button></span>
       </nav>
     </div>
   </header>
   <main id="main" tabindex="-1"></main>
 </div>
+<nav id="roomNavigation" class="room-navigation" aria-label="Cesty knihovnou" hidden>
+  <button class="room-nav-home" type="button" data-action="home">Za obálkou</button>
+  <button type="button" data-action="roomSearch">Najít knihu</button>
+  <button type="button" data-action="library">Moje knihovna</button>
+</nav>
 <dialog id="readerDialog" aria-labelledby="dialogTitle"></dialog>
 <div id="toastHost" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=20260913-7"></script>
-<script src="book-core.js?v=20260913-7"></script>
-<script src="catalogue-data.js?v=20260913-7"></script>
-<script src="catalogue-cs.js?v=20260913-7"></script>
-<script src="goodreads-catalogue.js?v=20260913-7"></script>
-<script src="goodreads-client.js?v=20260913-7"></script>
-<script src="catalogue-client.js?v=20260913-7"></script>
-<script src="qrcodegen.js?v=20260913-7"></script>
-<script src="library-tools.js?v=20260913-7"></script>
-<script src="bookshelf.js?v=20260913-7"></script>
-<script src="theme-palette.js?v=20260913-7"></script>
+<script src="config.js?v=20260913-8"></script>
+<script src="book-core.js?v=20260913-8"></script>
+<script src="catalogue-data.js?v=20260913-8"></script>
+<script src="catalogue-cs.js?v=20260913-8"></script>
+<script src="goodreads-catalogue.js?v=20260913-8"></script>
+<script src="goodreads-client.js?v=20260913-8"></script>
+<script src="catalogue-client.js?v=20260913-8"></script>
+<script src="qrcodegen.js?v=20260913-8"></script>
+<script src="library-tools.js?v=20260913-8"></script>
+<script src="bookshelf.js?v=20260913-8"></script>
+<script src="appearance.js?v=20260913-8"></script>
+<script src="realism-scene.js?v=20260913-8"></script>
 <script>
 var Core = window.BookCore;
 (function(){
@@ -262,17 +270,6 @@ var state = {
   lib:{}, toast:null, _focusHeader:false, _fromHero:false
 };
 var toastTimer=null, searchTimer=null, searchSeq=0, detailSeq=0;
-
-/* ============ téma ============ */
-var MOON='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>';
-var SUN='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"></path></svg>';
-function applyTheme(dark){ document.body.classList.toggle('dark',dark); var tb=el('themeBtn'); if(tb) tb.innerHTML= dark?SUN:MOON; try{localStorage.setItem('mzr_theme',dark?'dark':'light');}catch(e){} }
-function toggleTheme(){ applyTheme(!document.body.classList.contains('dark')); }
-function initTheme(){
-  var th=null; try{th=localStorage.getItem('mzr_theme');}catch(e){}
-  var dark = th==='dark' || (th===null && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  applyTheme(!!dark);
-}
 
 /* ============ localStorage ============ */
 function loadLib(){
@@ -561,7 +558,27 @@ function filterHTML(){
 function backupHTML(){return '<div class="toolbar"><button class="tag-chip" data-action="transfer">Přenést knihovnu · odkaz / QR</button><button class="tag-chip" data-action="excel"'+(!Object.keys(state.lib).length?' disabled':'')+'>Stáhnout tabulku Excel</button></div><p class="book-meta">Tvoje čtení se ukládá v tomto prohlížeči. Odkaz přenese aktuální knihovnu do dalšího zařízení.</p>';}
 function sourceStatus(issues){return issues&&issues.length?'<details class="source-status"><summary>Dostupnost katalogů</summary><p>'+issues.map(function(i){return esc(i.source+': '+i.message);}).join('<br>')+'</p></details>':'';}
 
+function isRealism(){return !!(window.Appearance&&window.Appearance.get().realism);}
+var roomPage=0;
+function roomHomeHTML(){
+  var books=state.featured.length?state.featured:featuredBooks([]),pages=Math.max(1,Math.ceil(books.length/6));
+  roomPage=roomPage%pages;
+  var recommendations=books.slice(roomPage*6,roomPage*6+6).map(function(b){
+    return '<button type="button" class="room-book" data-action="open" data-id="'+attr(b.id)+'" aria-label="'+attr('Otevřít knihu: '+b.title)+'">'
+      +coverHTML(b,{})+'<span class="room-book-label">'+esc(b.title)+'<small>'+esc(b.author)+'</small></span></button>';
+  }).join('');
+  return '<div class="room-home"><section class="room-scene" aria-label="Recepce knihovny">'
+    +'<div class="room-plaque">K objevování</div><div class="room-featured">'+recommendations+'</div>'
+    +'<section class="room-reception"><h1>Jaký příběh<br>si dnes otevřeš?</h1>'
+    +'<div class="hsearch-wrap"><input id="herosearch" type="search" maxlength="200" autocomplete="off" aria-label="Najdi knihu" placeholder="Název, autor nebo #štítek" value="'+attr(state.searchInput||'')+'"><button type="button" data-action="roomSubmit" aria-label="Hledat knihu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg></button></div>'
+    +'<div class="room-moods">'+['fantasy','romantika','sci-fi'].map(function(tag){return '<button data-action="tag-raw" data-term="'+tag+'" data-label="#'+tag+'">'+tag+'</button>';}).join('')+'</div></section>'
+    +'<button type="button" class="room-next" data-action="roomNext"'+(pages<2?' disabled':'')+'>Další příběhy <span aria-hidden="true">→</span></button>'
+    +'<details class="room-directory"><summary>Listovat katalogem</summary><div>'+discoveryHTML()+'<div class="room-directory-moods">'+MOODS.map(function(m,i){return '<button class="tag-chip" data-action="mood" data-mood="'+i+'">'+esc(m.label)+'</button>';}).join('')+'</div>'
+    +(shelf('reading').length?'<button class="tag-chip" data-action="library">Pokračovat ve čtení</button>':'')+'</div></details>'
+    +'</section></div>';
+}
 function homeHTML(){
+  if(isRealism())return roomHomeHTML();
   var reading=shelf('reading');
   var heroTags=MOODS.slice(0,7).map(function(m,i){return '<button class="tag-chip" data-action="mood" data-mood="'+i+'">'+esc(m.label)+'</button>';}).join('');
   var h='<div style="animation:fadeIn .45s ease both">'
@@ -612,8 +629,9 @@ function continueCardHTML(b){
 
 /* ============ SEARCH ============ */
 function searchHTML(){
-  var h='<div style="animation:fadeIn .4s ease both;padding-top:44px">'
+  var h='<div class="search-page" data-realism-stage style="animation:fadeIn .4s ease both;padding-top:44px">'
     +'<h1 style="font-family:\'Newsreader\',serif;font-weight:400;font-size:clamp(30px,4vw,42px);margin:0 0 14px">Výsledky</h1>';
+  if(isRealism())h+='<div class="hsearch-wrap room-search"><input id="herosearch" type="search" maxlength="200" autocomplete="off" aria-label="Hledej název, autora nebo štítek" placeholder="Název, autor nebo #štítek" value="'+attr(state.searchInput)+'"><button type="button" class="tag-chip" data-action="roomSubmit">Hledat</button></div>';
   if(state.activeTags.length){
     var chips=state.activeTags.map(function(t,i){return '<button class="tag-active" data-action="removeTag" data-i="'+i+'">'+esc(t.label)+'<span style="display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.22);font-size:13px">×</span></button>';}).join(' <span style="color:var(--faint2);font-size:14px">a&nbsp;zároveň</span> ');
     var addable=MOODS.map(function(m,i){ for(var x=0;x<state.activeTags.length;x++){if(state.activeTags[x].term===m.en||Core.norm(state.activeTags[x].cz)===Core.norm(m.label.replace(/^#/,'')))return '';} return '<button class="tag-chip" data-action="mood" data-mood="'+i+'">+ '+esc(m.label)+'</button>'; }).join('');
@@ -716,12 +734,12 @@ function detailHTML(){
   }
   var removeBtn = lib? '<button data-action="remove" data-id="'+attr(b.id)+'" style="margin-top:16px;background:none;border:none;cursor:pointer;font-size:15px;color:var(--faint2);padding:0">Odebrat z knihovny</button>':'';
   var appleLink = Core.safeURL(b.link)? '<a href="'+attr(b.link)+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:7px;color:var(--accent);font-size:16px;text-decoration:none;margin-bottom:30px">Otevřít u zdroje →</a>':'';
-  var h='<div style="animation:fadeIn .4s ease both;padding-top:30px">'
+  var h='<div class="detail-page" style="animation:fadeIn .4s ease both;padding-top:30px">'
     +'<button data-action="back" style="display:flex;align-items:center;gap:9px;background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:8px 0;margin-bottom:22px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>Zpět</button>'
-    +'<div class="detail-layout" style="display:flex;gap:54px;flex-wrap:wrap;align-items:flex-start">'
+    +'<div class="detail-layout" data-realism-stage style="display:flex;gap:54px;flex-wrap:wrap;align-items:flex-start">'
     +'<div class="detail-cover" style="flex:none;width:300px;max-width:100%;position:sticky;top:96px">'
     +'<div style="animation:popIn .6s cubic-bezier(.2,.8,.3,1) both;box-shadow:0 24px 54px rgba(var(--ink-rgb),.34);border-radius:7px;overflow:hidden">'+coverHTML(b,{big:true})+'</div></div>'
-    +'<div class="detail-info" style="flex:1;min-width:300px">'
+    +'<div class="detail-info" tabindex="0" aria-label="Poznámky a údaje o knize" style="flex:1;min-width:300px">'
     +'<h1 style="font-family:\'Newsreader\',serif;font-weight:400;font-size:clamp(34px,5vw,52px);line-height:1.06;margin:0 0 8px">'+esc(b.title)+'</h1>'
     +'<div style="font-size:20px;color:var(--muted);font-style:italic;margin-bottom:18px">'+esc(b.author)+'</div>'+bookMeta(b)+editionHTML(b)+(b.series?'<p class="book-meta">Série: '+esc(b.series)+(b.seriesNumber?' · '+esc(b.seriesNumber)+'. díl':'')+'</p>':'')
     +'<div id="detailPrimaryRating" class="detail-primary-rating" aria-live="polite">'+primaryRatingHTML(b)+'</div>'
@@ -750,10 +768,10 @@ function shelf(status){
 function libraryHTML(){
   var reading=shelf('reading'), want=shelf('want'), read=shelf('read');
   var count=Object.keys(state.lib).length;
-  var h='<div style="animation:fadeIn .4s ease both;padding-top:44px">'
+  var h='<div class="library-page" data-realism-stage style="animation:fadeIn .4s ease both;padding-top:44px">'
     +'<h1 style="font-family:\'Newsreader\',serif;font-weight:400;font-size:clamp(34px,5vw,50px);margin:0 0 6px">Moje knihovna</h1>'
     +'<p style="color:var(--faint);font-size:17px;margin:0 0 38px">'+count+' '+plkn(count)+' na tvých poličkách</p>'+backupHTML();
-  if(count===0){
+  if(count===0&&!isRealism()){
     h+='<div style="text-align:center;padding:64px 20px;background:var(--card);border:1px dashed rgba(var(--ink-rgb),.22);border-radius:16px">'
       +'<div style="font-family:\'Newsreader\',serif;font-size:28px;font-style:italic;margin-bottom:10px">Tvoje poličky jsou zatím prázdné.</div>'
       +'<p style="font-size:17px;color:var(--faint);margin:0 0 22px">Najdi si knihu a přidej ji do knihovny.</p>'
@@ -764,7 +782,7 @@ function libraryHTML(){
   if(state.libraryView==='shelf'){
     h+='<p class="book-meta shelf-help">Najeď na hřbet pro náhled přebalu. Kliknutím nebo klepnutím na hřbet otevřeš knihu.</p>';
     [['Rozečtené',reading,'reading'],['Chci přečíst',want,'want'],['Přečtené',read,'read']].forEach(function(group){
-      if(group[1].length)h+='<section class="shelf-section"><h2>'+group[0]+' <span>'+group[1].length+'</span></h2>'+BookShelf.render(group[1],{esc:esc,attr:attr,coverHTML:coverHTML,spineImageHTML:spineImageHTML,status:group[2]})+'</section>';
+      if(group[1].length||isRealism())h+='<section class="shelf-section'+(!group[1].length?' is-empty':'')+'"><h2>'+group[0]+' <span>'+group[1].length+'</span></h2>'+BookShelf.render(group[1],{esc:esc,attr:attr,coverHTML:coverHTML,spineImageHTML:spineImageHTML,status:group[2]})+'</section>';
     });
     return h+'</div>';
   }
@@ -889,6 +907,9 @@ function renderMain(){
   else if(state.view==='detail') html=detailHTML();
   else if(state.view==='library') html=libraryHTML();
   else html=homeHTML();
+  // Keep the single appearance menu alive when the scenic stage is replaced.
+  var roomNav=window.Appearance&&el('roomNavigation');
+  if(roomNav)document.body.appendChild(roomNav);
   el('main').innerHTML=(state.storageError?'<div class="notice" role="alert">'+esc(state.storageError)+' <button class="tag-chip" data-action="exportRaw">Stáhnout původní data</button> <button class="tag-chip" data-action="export">Záloha aktuální knihovny</button></div>':'')+html;
   document.querySelectorAll('.shelf-book img').forEach(function(img){if(img.complete)fitShelfCover(img);});
   if(inputFocus){var target=document.querySelector('[data-action="'+inputFocus.action+'"][data-id="'+CSS.escape(inputFocus.id)+'"]');if(target)target.focus();}
@@ -896,9 +917,24 @@ function renderMain(){
   document.querySelectorAll('[data-action="total"]').forEach(function(x){x.setAttribute('aria-label','Celkový počet stran');});
   document.querySelectorAll('[data-action="slider"]').forEach(function(x){x.setAttribute('aria-label','Pokrok čtení');});
   document.querySelectorAll('[data-action="remove"]').forEach(function(x){x.setAttribute('aria-label','Odebrat z knihovny');});
-  if(heroFocused && state.view==='home' && el('herosearch')){el('herosearch').focus();try{el('herosearch').setSelectionRange(caret,caret);}catch(e){}}
-  if(state._focusHeader){ var hs=el('hsearch'); if(hs){ hs.focus(); try{ hs.setSelectionRange(hs.value.length,hs.value.length); }catch(e){} } state._focusHeader=false; }
+  if(heroFocused && el('herosearch')){el('herosearch').focus();try{el('herosearch').setSelectionRange(caret,caret);}catch(e){}}
+  if(state._focusHeader){ var hs=isRealism()?el('herosearch'):el('hsearch'); if(hs){ hs.focus(); try{ hs.setSelectionRange(hs.value.length,hs.value.length); }catch(e){} } state._focusHeader=false; }
+  syncAppearanceScene();
   observeRatingCards();
+}
+function syncAppearanceScene(){
+  if(!window.Appearance)return;
+  var appearance=window.Appearance.get(),nav=el('roomNavigation'),picker=document.querySelector('.appearance-picker');
+  document.body.dataset.view=state.view;
+  if(nav){
+    nav.hidden=!appearance.realism;
+    if(appearance.realism){
+      var stage=state.view==='home'?document.querySelector('.room-scene'):null;
+      (stage||document.body).appendChild(nav);
+      if(picker)nav.appendChild(picker);
+    }else if(picker&&el('appearanceHome'))el('appearanceHome').appendChild(picker);
+  }
+  if(window.RealismScene)window.RealismScene.sync({view:state.view,appearance:appearance});
 }
 function updateBadge(){ var c=Object.keys(state.lib).length; el('libBadge').innerHTML = c>0 ? '<span class="badge">'+c+'</span>' : ''; }
 function renderToast(){
@@ -913,7 +949,9 @@ document.addEventListener('click',function(e){
   var a=t.getAttribute('data-action');
   if(a==='slider'||a==='page'||a==='total') return;
   if(a==='home') goHome();
-  else if(a==='theme') toggleTheme();
+  else if(a==='roomSearch'){goHome();if(el('herosearch'))el('herosearch').focus();}
+  else if(a==='roomSubmit'){clearTimeout(searchTimer);state._fromHero=true;applyQuery();}
+  else if(a==='roomNext'){roomPage++;renderMain();}
   else if(a==='back'){setRoute(state.returnView==='library'?'#shelf':'');detailSeq++;state.view=state.returnView==='library'?'library':(state.activeTags.length||state.query?'search':'home');if(state.view==='search')runSearch();else renderMain();}
   else if(a==='library') goLibrary();
   else if(a==='libraryView'){state.libraryView=t.getAttribute('data-mode')==='overview'?'overview':'shelf';renderMain();}
@@ -963,7 +1001,12 @@ document.addEventListener('keydown',function(e){
 window.addEventListener('storage',function(e){if(e.key==='mzr_lib_v2'){state.storageBlocked=false;state.storageError='';loadLib();updateBadge();renderMain();}});
 
 /* ============ start ============ */
-initTheme();
+var lastRealism=isRealism();
+document.addEventListener('za:appearance',function(){
+  var realism=isRealism();
+  if(realism!==lastRealism){lastRealism=realism;renderMain();}
+  else syncAppearanceScene();
+});
 loadLib();
 updateBadge();
 refreshFeatured();

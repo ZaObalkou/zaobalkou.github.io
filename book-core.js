@@ -31,6 +31,9 @@
     if(!a||!b)return false;var ia=isbn(a.isbn),ib=isbn(b.isbn);if(ia&&ib)return ia===ib;
     if(a.id&&a.id===b.id)return true;
     if((a.olEditionId&&a.olEditionId===b.olEditionId)||(a.editionId&&a.editionId===b.editionId))return true;
+    // An Apple product ID identifies a store edition, not just a story. A
+    // contributor/translation crosswalk must not turn it into a publisher ISBN.
+    if(/^a:\d+$/.test(a.editionId||'')||/^a:\d+$/.test(b.editionId||''))return false;
     var la=language(a.language),lb=language(b.language);if(la!==lb)return false;
     if(!sameWork(a,b))return false;
     if((!la||!lb)&&norm(a.title)!==norm(b.title))return false;
@@ -134,9 +137,24 @@
       signatures(match).concat(sig).forEach(function(s){var bucket=index.get(s)||[];if(!bucket.includes(match))bucket.push(match);index.set(s,bucket);});
     });});return out;
   }
+  function knownStoreWork(book,seed){
+    if(book.source!=='Apple Books'||seed.verified!==true||!workKey(seed))return false;
+    // Apple lists translators in artistName after the primary author. Match a
+    // complete known author name; never split every author into global aliases.
+    var contributors=String(book.author||'').split(/\s+&\s+/);
+    if(contributors.length>5||!authorKeys(seed).includes(authorKey(contributors[0])))return false;
+    if(intersects(titleKeys(book),titleKeys(seed)))return true;
+    // French store titles can append "(Series - tome 1)". Both the known
+    // series name and volume must agree before treating this as decoration.
+    var suffix=String(book.title||'').match(/^(.+?)\s*\((.+?)\s*[-–—,:]\s*(?:tome|book|volume|vol\.?|díl)\s*#?\s*(\d+(?:[.,]\d+)?)\)\s*$/i);
+    function seriesName(v){return norm(v).replace(/^the\s+/,'');}
+    return !!(suffix&&seed.series&&seed.seriesNumber!=null&&Number(suffix[3].replace(',','.'))===Number(String(seed.seriesNumber).replace(',','.'))&&seriesName(suffix[2])===seriesName(seed.series)&&titleKeys(seed).includes(norm(suffix[1])));
+  }
   function linkCatalogue(books,seeds){
-    return(books||[]).map(function(b){var out=copyBook(b);(seeds||[]).forEach(function(seed){
-      if(!sameWork(out,seed))return;out.workId=seed.workId||out.workId||seed.id;
+    return(books||[]).map(function(b){var out=copyBook(b),matched=(seeds||[]).filter(function(seed){return sameWork(b,seed);});
+      if(!matched.length){var candidates=(seeds||[]).filter(function(seed){return knownStoreWork(b,seed);});if(unique(candidates.map(workKey)).length===1)matched=candidates;}
+      matched.forEach(function(seed){
+      out.workId=seed.workId||out.workId||seed.id;
       out.aliases=unique([].concat(list(out.aliases),seed.title,list(seed.aliases))).filter(function(t){return t!==out.title;}).slice(0,20);
       out.authorAliases=unique([].concat(list(out.authorAliases),seed.author,list(seed.authorAliases))).filter(function(a){return a!==out.author;}).slice(0,20);
       out.tags=unique(list(seed.tags,100,200).concat(list(out.tags,100,200))).slice(0,100);

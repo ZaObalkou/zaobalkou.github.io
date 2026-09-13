@@ -1,0 +1,290 @@
+/* A separate, optional room. Nothing in the familiar view inherits these rules. */
+body[data-realism="true"]{
+  --room-photo:url('assets/library-room-oak.webp');--desk-photo:url('assets/library-desk-oak.webp');--wood-texture:url('assets/wood-grain.webp');
+  --wood-base:#865831;--wood-edge:#3e2514;--wood-light:#c59559;--wood-tone:rgba(106,62,24,.22);--wood-inset:rgba(30,14,4,.75);
+  --real-paper:#eee2c9;--real-paper-edge:#c1ad85;--real-ink:#382c20;
+  --real-paper-grain:repeating-linear-gradient(93deg,rgba(91,65,28,.025) 0 1px,transparent 1px 4px),repeating-linear-gradient(2deg,rgba(255,255,255,.1) 0 1px,transparent 1px 6px);
+  --ink:#382c20;--ink-rgb:56,44,32;--muted:#665742;--faint:#76644e;--faint2:#76644e;--desc:#514330;--bg:#eee2c9;--bg-rgb:238,226,201;--card:#f2e8d3;--accent:#70542b;--accent-rgb:112,84,43;--onaccent:#fff8e7;--notice:#655032;
+  color:var(--real-ink);background:#21170f;
+}
+body[data-realism="true"][data-wood="spruce"]{--room-photo:url('assets/library-room-spruce.webp');--desk-photo:url('assets/library-desk-spruce.webp');--wood-base:#b39768;--wood-edge:#766043;--wood-light:#e2c898;--wood-tone:rgba(239,216,167,.24);--wood-inset:rgba(60,40,18,.58)}
+body[data-realism="true"][data-wood="birch"]{--room-photo:url('assets/library-room-birch.webp');--desk-photo:url('assets/library-desk-birch.webp');--wood-base:#d4bea0;--wood-edge:#9a8261;--wood-light:#f1ddba;--wood-tone:rgba(255,240,202,.38);--wood-inset:rgba(72,51,28,.5)}
+body[data-realism="true"][data-wood="cherry"]{--room-photo:url('assets/library-room-cherry.webp');--desk-photo:url('assets/library-desk-cherry.webp');--wood-base:#945b43;--wood-edge:#542d21;--wood-light:#cd9472;--wood-tone:rgba(145,55,30,.28);--wood-inset:rgba(36,13,6,.72)}
+body[data-realism="true"][data-wood="acacia"]{--room-photo:url('assets/library-room-acacia.webp');--desk-photo:url('assets/library-desk-acacia.webp');--wood-base:#a26c37;--wood-edge:#553114;--wood-light:#daaa66;--wood-tone:rgba(137,75,18,.22);--wood-inset:rgba(39,21,5,.74)}
+body.dark[data-realism="true"]{--real-paper:#d9cbb0;--real-paper-edge:#a68c60;--real-ink:#302719;--ink:#302719;--ink-rgb:48,39,25;--muted:#5c4f3a;--faint:#65563e;--faint2:#65563e;--desc:#4a3d29;--bg:#d9cbb0;--bg-rgb:217,203,176;--card:#e3d5b9;--accent:#67491f;--accent-rgb:103,73,31;background:#100e0c}
+body[data-realism="true"] .app-bg{background:transparent;background-image:none;isolation:isolate}
+body[data-realism="true"] .app-bg:before{content:"";position:fixed;z-index:-2;inset:0;background:linear-gradient(rgba(28,19,10,.23),rgba(22,15,8,.5)),var(--room-photo) center / cover;pointer-events:none}
+body.dark[data-realism="true"] .app-bg:before{filter:brightness(.53) saturate(.72)}
+body[data-realism="true"] .hdr{display:none}
+body[data-realism="true"] main{position:relative;max-width:1320px;padding:30px 38px 126px}
+body[data-realism="true"][data-view="home"] main{max-width:none;width:100%;padding:0}
+body[data-realism="true"] .tag-chip,body[data-realism="true"] .tag-active{border-radius:2px;background:transparent;border-color:rgba(89,63,28,.24);color:var(--real-ink);box-shadow:0 1px 0 rgba(255,255,255,.3);transition:color .2s,background .2s}
+body[data-realism="true"] .tag-chip:hover,body[data-realism="true"] .tag-active:hover{transform:none;background:rgba(87,61,25,.09);color:var(--real-ink)}
+body[data-realism="true"] .toolbar [aria-pressed="true"]{background:rgba(112,77,30,.12);color:var(--real-ink);border-color:#907044;box-shadow:inset 0 -2px 0 #907044}
+body[data-realism="true"] select,body[data-realism="true"] .numin{border:0;border-bottom:1px solid #a18a61;border-radius:1px;background:rgba(255,251,230,.2);box-shadow:none;color:var(--real-ink)}
+body[data-realism="true"] select:focus{border-color:var(--accent);box-shadow:0 2px 0 var(--accent)}
+
+/* The image is the actual scene: all live elements share its aspect and camera. */
+body[data-realism="true"] .room-home{position:relative;height:100dvh;min-height:570px;overflow:hidden;isolation:isolate;background:#2c2117}
+body[data-realism="true"] .room-scene{position:absolute;left:50%;top:50%;width:max(100vw,calc(100dvh * 1.59879));aspect-ratio:1586/992;transform:translate(-50%,-50%) translate3d(var(--room-look-shift-x,0px),var(--room-look-shift-y,0px),0) perspective(1600px) rotateY(var(--room-look-x,0deg)) rotateX(var(--room-look-y,0deg)) scale(1.015);transform-origin:50% 50%;isolation:isolate;container-type:inline-size}
+body[data-realism="true"] .room-scene:before{content:"";position:absolute;z-index:-2;inset:0;background:var(--room-photo) center / 100% 100% no-repeat;transition:filter .8s}
+body[data-realism="true"] .room-scene:after{content:"";position:absolute;z-index:20;inset:0;pointer-events:none;background:radial-gradient(ellipse at 21% 20%,rgba(255,230,184,.06),transparent 56%),linear-gradient(90deg,rgba(12,8,4,.03),transparent 20%,transparent 78%,rgba(12,8,4,.08));mix-blend-mode:multiply}
+body.dark[data-realism="true"] .room-scene:before{filter:brightness(.52) saturate(.79)}
+body.dark[data-realism="true"] .room-scene:after{background:radial-gradient(ellipse at 48% 43%,rgba(247,168,70,.08),rgba(4,9,19,.15) 69%);mix-blend-mode:normal}
+body[data-realism="true"] .room-reception{position:absolute;z-index:4;left:50.3%;top:47.2%;width:24.5%;height:19.5%;padding:.5% 1%;display:flex;flex-direction:column;align-items:stretch;justify-content:center;color:#493b29;transform:rotate(.3deg);text-align:center}
+body[data-realism="true"] .room-reception h1{font:500 clamp(24px,2.3cqw,44px)/1 'Newsreader',Georgia,serif;letter-spacing:-.035em;margin:0 0 2%;color:#443629;text-shadow:0 1px 0 rgba(255,255,255,.25)}
+body[data-realism="true"] .room-reception h1 em{font-weight:400}
+body[data-realism="true"] .room-reception>p{margin:0 0 4%;font:italic clamp(12px,1.05cqw,20px)/1.3 'EB Garamond',Georgia,serif;color:#6d5b43}
+body[data-realism="true"] .room-reception .hsearch-wrap{flex:0 0 auto;width:100%;max-width:none;min-width:0;min-height:0;gap:8px;padding:1.4% 1%;border:0;border-bottom:1.5px solid #9f8764;border-radius:0;background:transparent;box-shadow:none!important}
+body[data-realism="true"] .room-reception .hsearch-wrap:focus-within{border-bottom-color:#72532f;box-shadow:0 2px 0 rgba(112,77,30,.22)!important}
+body[data-realism="true"] .room-reception .hsearch-wrap input{font:italic clamp(15px,1.42cqw,24px)/1.15 'EB Garamond',Georgia,serif;color:#4b3826;min-width:0;text-align:left}
+body[data-realism="true"] .room-reception input::placeholder{color:#79664d;opacity:1}
+body[data-realism="true"] .room-reception .hsearch-wrap svg{width:clamp(15px,1.25cqw,22px);height:auto;color:#735c3e}
+body[data-realism="true"] .room-reception .home-tags,body[data-realism="true"] .room-moods{display:flex;flex-wrap:wrap;justify-content:center;gap:3px 12px;margin:2.5% 0 0!important}
+body[data-realism="true"] .room-reception .tag-chip{min-height:0;padding:1px 0;background:transparent;border:0;border-bottom:1px solid rgba(92,66,31,.2);border-radius:0;box-shadow:none;font:italic clamp(12px,1.01cqw,18px)/1.35 'EB Garamond',Georgia,serif;color:#74593b}
+body[data-realism="true"] .room-reception .tag-chip:hover{color:#352616;border-bottom-color:#74593b}
+body[data-realism="true"] .room-plaque{position:absolute;left:2.2%;top:24.9%;width:14.5%;height:5.6%;display:flex;align-items:center;justify-content:center;text-align:center;transform:skewY(10deg);font:500 clamp(14px,1.4cqw,27px)/1.12 'Newsreader',Georgia,serif;letter-spacing:.025em;color:#453016;text-shadow:0 1px 0 rgba(255,233,174,.5);padding:0 1%;margin:0}
+body[data-realism="true"] .room-featured{position:absolute;inset:0;pointer-events:none;perspective:1400px}
+body[data-realism="true"] .room-book{position:absolute;width:4.5%;height:15.4%;border:0;padding:0;background:none;color:#eaddbd;cursor:pointer;pointer-events:auto;overflow:visible;perspective:800px;isolation:isolate;box-shadow:none;z-index:3}
+body[data-realism="true"] .room-book:nth-child(1){left:1.8%;bottom:44.55%}
+body[data-realism="true"] .room-book:nth-child(2){left:7.25%;bottom:45.25%}
+body[data-realism="true"] .room-book:nth-child(3){left:12.7%;bottom:45.95%}
+body[data-realism="true"] .room-book:nth-child(4){left:1.8%;bottom:21.55%}
+body[data-realism="true"] .room-book:nth-child(5){left:7.25%;bottom:23.35%}
+body[data-realism="true"] .room-book:nth-child(6){left:12.7%;bottom:25.15%}
+body[data-realism="true"] .room-book>.cover{width:100%;height:100%;padding:8px!important;aspect-ratio:auto;border-radius:2px 3px 3px 1px;transform:skewY(-5deg) rotateY(13deg);transform-origin:35% 100%;box-shadow:-4px 1px 0 #423421,3px 0 0 #c8b98d,5px 2px 0 #44311b,7px 4px 8px rgba(12,6,2,.66);filter:brightness(.87) saturate(.9);transition:transform .42s cubic-bezier(.16,.85,.25,1),filter .3s,box-shadow .4s;pointer-events:none}
+body[data-realism="true"] .room-book:nth-child(n+4)>.cover{transform:skewY(-14deg) rotateY(13deg)}
+body[data-realism="true"] .room-book>.cover:after{content:"";position:absolute;z-index:5;inset:0;pointer-events:none;border-radius:inherit;background:linear-gradient(94deg,rgba(5,2,0,.26),rgba(255,245,208,.22) 4%,rgba(5,2,0,.12) 8%,transparent 18%,rgba(255,247,223,.06) 86%,rgba(0,0,0,.15));mix-blend-mode:multiply}
+body[data-realism="true"] .room-book .c-title{font-size:clamp(10px,1.1cqw,18px)!important}
+body[data-realism="true"] .room-book .c-author{font-size:clamp(8px,.7cqw,12px)}
+body[data-realism="true"] .room-book .kicker,body[data-realism="true"] .room-book .c-rule{display:none}
+body[data-realism="true"] .room-book-label{position:absolute;left:-30%;bottom:-26%;min-width:180%;padding:10% 12%;opacity:0;visibility:hidden;pointer-events:none;background:#ecdfc1;background-image:var(--real-paper-grain);color:#463420;box-shadow:0 4px 9px rgba(16,9,3,.35);font:italic clamp(10px,.95cqw,17px)/1.2 'EB Garamond',Georgia,serif;transform:rotate(-2deg);transition:opacity .2s}
+body[data-realism="true"] .room-book:focus-visible{outline:2px solid #f8d790;outline-offset:7px;z-index:12}
+body[data-realism="true"] .room-book:focus-visible>.cover{transform:translate(18%,-8%) rotateY(-12deg) scale(1.65);filter:brightness(1.03);box-shadow:-6px 2px 0 #423421,4px 0 0 #d8cda6,7px 4px 0 #44311b,15px 18px 20px rgba(12,6,2,.58)}
+body[data-realism="true"] .room-book:focus-visible .room-book-label{opacity:1;visibility:visible}
+@media(hover:hover) and (pointer:fine){
+  body[data-realism="true"] .room-book:hover{z-index:12}
+  body[data-realism="true"] .room-book:hover>.cover{transform:translate(18%,-8%) rotateY(-12deg) scale(1.65);filter:brightness(1.03);box-shadow:-6px 2px 0 #423421,4px 0 0 #d8cda6,7px 4px 0 #44311b,15px 18px 20px rgba(12,6,2,.58)}
+  body[data-realism="true"] .room-book:hover .room-book-label{opacity:1;visibility:visible}
+}
+body[data-realism="true"] .room-book *,body[data-realism="true"] .room-book-label *{pointer-events:none!important}
+
+/* Engraved objects replace the toolbar; the one appearance menu is still reachable. */
+body[data-realism="true"] .room-navigation{position:fixed;right:28px;bottom:25px;z-index:45;display:flex;align-items:center;justify-content:center;gap:0;width:max-content;max-width:calc(100vw - 28px);padding:5px 18px;border:1px solid #61421d;border-radius:3px;background:linear-gradient(112deg,#cbb17a,#9c7c45 48%,#d1b680 86%,#92703a);box-shadow:0 3px 2px #3c2815,0 7px 14px rgba(11,6,2,.42),inset 0 1px 0 rgba(255,232,171,.6),inset 0 -1px 0 rgba(82,53,16,.5);color:#3e2b13;text-shadow:0 1px 0 rgba(255,232,171,.35)}
+body[data-realism="true"] .room-navigation:before,body[data-realism="true"] .room-navigation:after{content:"";position:absolute;top:50%;width:5px;height:5px;margin-top:-2px;border-radius:50%;background:linear-gradient(45deg,#c2a266 42%,#61411d 43% 58%,#c2a266 59%);box-shadow:inset 0 1px 1px rgba(25,11,2,.5),0 1px 0 rgba(255,231,168,.5);pointer-events:none}
+body[data-realism="true"] .room-navigation:before{left:6px}
+body[data-realism="true"] .room-navigation:after{right:6px}
+body[data-realism="true"] .room-scene>.room-navigation{position:absolute;left:55%;right:auto;top:76.5%;bottom:auto;max-width:40%;padding:.35% 1%;transform:rotate(4.5deg);transform-origin:center;color:#3e2b13}
+body[data-realism="true"] .room-navigation button,body[data-realism="true"] .room-navigation a{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:8px 14px;background:transparent;border:0;border-radius:1px;color:inherit;font:500 17px/1.2 'EB Garamond',Georgia,serif;text-decoration:none;text-shadow:inherit;white-space:nowrap;cursor:pointer}
+body[data-realism="true"] .room-navigation .appearance-picker{border-left:1px solid rgba(79,51,15,.26);margin-left:4px;padding-left:4px}
+body[data-realism="true"] .room-navigation button:hover,body[data-realism="true"] .room-navigation a:hover{background:rgba(76,44,7,.08);color:#231806}
+body[data-realism="true"] .room-navigation svg{width:16px;height:16px;color:inherit}
+body[data-realism="true"] .room-navigation .badge{min-width:0;width:auto;height:auto;padding:0;background:transparent;color:inherit;border-radius:0;font-size:13px}
+body[data-realism="true"] .room-navigation .badge:before{content:"· ";font-size:12px}
+body[data-realism="true"] .room-navigation .appearance-panel{top:auto;bottom:calc(100% + 15px);right:-3px;transform:none;text-shadow:none}
+body[data-realism="true"] .appearance-panel{background:var(--real-paper);background-image:var(--real-paper-grain);border:1px solid var(--real-paper-edge);border-radius:3px;box-shadow:0 10px 30px rgba(16,9,3,.5),inset 0 0 10px rgba(105,72,29,.04);color:var(--real-ink)}
+body[data-realism="true"] .room-navigation .appearance-panel button{font-family:'DM Sans',system-ui,sans-serif;font-size:14px;white-space:normal;text-shadow:none}
+body[data-realism="true"] .room-navigation .appearance-close{display:grid;min-height:40px;padding:0}
+body[data-realism="true"] .room-navigation .appearance-switch{display:block;min-height:44px;padding:0;width:48px}
+body[data-realism="true"] .room-navigation .appearance-choice{justify-content:flex-start}
+body[data-realism="true"] .room-navigation .appearance-wood-choices .appearance-choice{justify-content:center;font-size:12px;padding:8px 2px}
+body[data-realism="true"] .room-navigation .appearance-toggle>span{display:inline}
+body[data-realism="true"] .room-navigation .appearance-choice .appearance-swatch svg{width:16px;height:16px}
+body[data-realism="true"] .room-navigation .appearance-panel button[aria-pressed="true"]{background:rgba(112,77,30,.08);border:1px solid rgba(112,77,30,.3)}
+body[data-realism="true"] .appearance-wood-choices .appearance-swatch{background-image:linear-gradient(100deg,rgba(255,255,255,.1),rgba(58,25,4,.1)),var(--wood-texture);background-size:auto,150px 100px;background-blend-mode:normal,luminosity}
+
+/* Catalogues are index cards; results and saved books occupy an actual cabinet. */
+body[data-realism="true"] .library-page,body[data-realism="true"] .search-page{position:relative;padding-top:0!important}
+body[data-realism="true"] .library-head,body[data-realism="true"] .search-page{padding:24px 30px;background:var(--real-paper);background-image:var(--real-paper-grain);border:1px solid var(--real-paper-edge);border-radius:2px;box-shadow:0 8px 24px rgba(18,10,3,.33),inset 0 0 16px rgba(94,62,20,.025)}
+body[data-realism="true"] .library-page>h1,body[data-realism="true"] .library-page>h1+p{width:fit-content;max-width:100%;padding:8px 24px;margin:0!important;background:var(--real-paper);background-image:var(--real-paper-grain);color:var(--real-ink)}
+body[data-realism="true"] .library-page>h1{padding-top:20px;border-radius:2px 2px 0 0}
+body[data-realism="true"] .library-page>h1+p{padding-bottom:16px;margin-bottom:18px!important}
+body[data-realism="true"] .library-page>.toolbar{width:fit-content;max-width:100%;padding:9px 12px;border:1px solid var(--real-paper-edge);border-radius:2px;background:var(--real-paper);background-image:var(--real-paper-grain);box-shadow:0 4px 10px rgba(18,10,3,.24)}
+body[data-realism="true"] .library-page>.book-meta{width:fit-content;max-width:100%;padding:7px 12px;background:var(--real-paper);border:1px solid var(--real-paper-edge);border-radius:1px;font-style:italic}
+body[data-realism="true"] .search-page .filters{background:transparent;border:0;border-top:1px solid rgba(97,72,36,.21);border-bottom:1px solid rgba(97,72,36,.21);padding:18px 0;border-radius:0;box-shadow:none}
+body[data-realism="true"] .search-page .grid{padding:28px 20px 32px;margin-top:28px;gap:37px 25px;border:13px solid var(--wood-edge);border-radius:2px;background-color:var(--wood-base);background-image:linear-gradient(90deg,var(--wood-inset),transparent 10% 90%,var(--wood-inset)),linear-gradient(var(--wood-tone),var(--wood-tone)),var(--wood-texture);background-size:auto,auto,900px 600px;box-shadow:inset 0 10px 18px var(--wood-inset),0 6px 13px rgba(26,13,4,.2)}
+body[data-realism="true"] .search-page .book-card{gap:12px;align-self:start;position:relative}
+body[data-realism="true"] .search-page .book-card>.cover{border-radius:2px 4px 4px 1px;box-shadow:3px 1px 0 #d2c49f,5px 3px 0 #4b3520,7px 8px 10px rgba(15,7,2,.48)}
+body[data-realism="true"] .search-page .book-card>div:not(.cover){padding:9px 10px;background:var(--real-paper);background-image:var(--real-paper-grain);color:var(--real-ink);box-shadow:0 3px 4px rgba(16,8,2,.35);transform:rotate(-.6deg)}
+body[data-realism="true"] .search-page .book-card:nth-child(2n)>div:not(.cover){transform:rotate(.6deg)}
+body[data-realism="true"] .source-status{padding:7px 10px;border:1px solid var(--real-paper-edge);border-radius:2px;background:var(--real-paper)}
+body[data-realism="true"] .shelf-section{position:relative;margin:0!important;padding:48px 8px 0;border:20px solid var(--wood-base);border-bottom:0;background-color:var(--wood-base);background-image:linear-gradient(90deg,var(--wood-inset),rgba(25,12,3,.07) 12% 87%,var(--wood-inset)),linear-gradient(var(--wood-tone),var(--wood-tone)),var(--wood-texture);background-size:auto,auto,1000px 680px;box-shadow:inset 0 12px 24px var(--wood-inset),inset 2px 0 1px var(--wood-light),inset -2px 0 1px var(--wood-light),0 5px 18px rgba(25,14,4,.4)}
+body[data-realism="true"] .shelf-section:first-of-type{border-top-width:25px;border-radius:4px 4px 0 0;margin-top:28px!important}
+body[data-realism="true"] .shelf-section:last-of-type{border-bottom:26px solid var(--wood-edge);border-radius:0 0 4px 4px;box-shadow:inset 0 12px 24px var(--wood-inset),inset 2px 0 1px var(--wood-light),inset -2px 0 1px var(--wood-light),0 20px 30px rgba(25,14,4,.45)}
+body[data-realism="true"] .shelf-section h2{position:absolute;z-index:2;top:8px;left:50%;max-width:calc(100% - 24px);margin:0!important;transform:translateX(-50%);white-space:nowrap;padding:6px 24px;border:1px solid #78592b;border-radius:2px;background:linear-gradient(108deg,#dbc58e,#b09254 45%,#dfc791 85%,#a88647);color:#352613;font:500 19px/1.3 'Newsreader',Georgia,serif;box-shadow:0 2px 4px rgba(32,16,4,.5),inset 0 1px 0 rgba(255,242,194,.8),inset 0 -1px 0 rgba(63,37,8,.3);text-shadow:0 1px 0 rgba(255,245,199,.35)}
+body[data-realism="true"] .shelf-section h2:before,body[data-realism="true"] .shelf-section h2:after{content:"";position:absolute;top:50%;width:4px;height:4px;margin-top:-2px;border-radius:50%;background:#76552a;box-shadow:0 1px 0 rgba(255,240,184,.55),inset 0 1px 1px rgba(28,16,3,.5)}
+body[data-realism="true"] .shelf-section h2:before{left:7px}
+body[data-realism="true"] .shelf-section h2:after{right:7px}
+body[data-realism="true"] .shelf-section h2 span{min-width:0;height:auto;padding:0;margin-left:8px;border-radius:0;background:transparent;color:#49341a;font-size:13px}
+body[data-realism="true"] .bookshelf{border-radius:0;background:transparent;scrollbar-color:var(--wood-light) var(--wood-edge);overflow-x:auto;overflow-y:hidden;overscroll-behavior-y:auto;padding-bottom:0}
+body[data-realism="true"] .bookshelf-track{min-height:364px;padding-top:38px;padding-bottom:98px}
+body[data-realism="true"] .bookshelf-track:after{bottom:80px;height:20px;border:1px solid var(--wood-edge);border-top:3px solid var(--wood-light);border-bottom:5px solid var(--wood-edge);border-radius:1px;background-color:var(--wood-base);background-image:linear-gradient(var(--wood-tone),var(--wood-tone)),var(--wood-texture);background-size:auto,720px 480px;box-shadow:0 9px 12px rgba(24,12,3,.5),inset 0 2px 1px rgba(245,212,151,.25)}
+body[data-realism="true"] .shelf-spine{box-shadow:4px 3px 6px rgba(16,8,2,.55),inset 2px 0 1px rgba(255,236,193,.2)}
+body[data-realism="true"] .shelf-preview{filter:drop-shadow(6px 10px 8px rgba(21,10,2,.5))}
+body[data-realism="true"] .shelf-preview-caption{background:var(--real-paper);background-image:var(--real-paper-grain);border-color:var(--real-paper-edge);border-radius:1px;box-shadow:0 3px 6px rgba(20,10,2,.3)}
+body[data-realism="true"] .shelf-section.is-empty{display:block}
+body[data-realism="true"] .shelf-section.is-empty .bookshelf-track{min-height:315px}
+body[data-realism="true"] .shelf-empty{position:absolute;left:0;right:0;bottom:112px;text-align:center;font:italic 15px 'EB Garamond',Georgia,serif;color:var(--wood-light);text-shadow:0 1px 2px #25170c}
+
+/* A book on a photographed desk; the note scrolls, but releases at its edges. */
+body[data-realism="true"][data-view="detail"] main{max-width:1600px;padding:20px 26px 98px}
+body[data-realism="true"] .detail-page{padding-top:0!important}
+body[data-realism="true"] .detail-page>button[data-action="back"]{padding:8px 17px!important;margin:0 0 15px!important;background:var(--real-paper)!important;background-image:var(--real-paper-grain)!important;border:1px solid var(--real-paper-edge)!important;border-radius:2px;color:var(--real-ink)!important;box-shadow:0 3px 8px rgba(25,15,5,.3);transform:rotate(-1deg)}
+body[data-realism="true"] .detail-layout{position:relative!important;display:block!important;width:100%;aspect-ratio:1586/992;padding:0!important;gap:0!important;border:0;border-radius:2px;background:var(--desk-photo) center / 100% 100% no-repeat;box-shadow:0 22px 50px rgba(14,7,2,.45);isolation:isolate}
+body[data-realism="true"] .detail-layout:before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(140deg,rgba(255,237,181,.025),rgba(20,9,2,.05));border-radius:inherit}
+body.dark[data-realism="true"] .detail-layout:before{z-index:0;background:linear-gradient(135deg,rgba(29,19,9,.08),rgba(10,15,26,.31));mix-blend-mode:multiply}
+body[data-realism="true"] .detail-cover{position:absolute!important;left:13.5%;top:25%!important;width:25%!important;max-width:100%;margin:0!important;transform:rotate(-8deg) perspective(1200px) rotateX(4deg);transform-origin:center;z-index:1}
+body[data-realism="true"] .detail-cover>div{overflow:visible!important;border-radius:2px!important;box-shadow:3px 3px 0 #d4c7a9,6px 6px 0 #bca77d,9px 9px 0 #463421,16px 23px 19px rgba(21,11,3,.56)!important;animation:none!important}
+body[data-realism="true"] .detail-cover .cover{border-radius:2px;box-shadow:inset 4px 0 5px rgba(255,255,255,.07)}
+body[data-realism="true"] .detail-cover .cover:after{content:"";position:absolute;z-index:5;inset:0;pointer-events:none;background:linear-gradient(95deg,rgba(0,0,0,.24),rgba(255,255,255,.2) 2%,rgba(0,0,0,.12) 5%,transparent 12%,rgba(255,236,180,.05) 75%,rgba(0,0,0,.08))}
+body[data-realism="true"] .detail-info{position:absolute!important;left:47.5%;top:14%;width:35.1%;height:72%;min-width:0!important;flex:none!important;overflow-y:auto;overflow-x:hidden;overscroll-behavior:auto;padding:4px 12px 36px 6px;background:transparent;color:var(--real-ink);border:0;border-radius:0;box-shadow:none;scrollbar-width:thin;scrollbar-color:rgba(121,93,47,.45) transparent;scroll-padding-block:18px;transform:rotate(-.1deg)}
+body[data-realism="true"] .detail-info:focus-visible{outline:1px solid rgba(112,77,30,.4);outline-offset:7px}
+body[data-realism="true"] .detail-info h1{font-size:clamp(28px,3.05vw,48px)!important;line-height:1.03!important;letter-spacing:-.025em}
+body[data-realism="true"] .detail-info>div:nth-child(2){font-size:20px!important}
+body[data-realism="true"] .detail-info .desc{font-family:'EB Garamond',Georgia,serif;font-style:italic;font-size:19px;line-height:1.56;color:var(--desc)}
+body[data-realism="true"] .detail-info .book-meta{font-family:'EB Garamond',Georgia,serif;font-size:13px}
+body[data-realism="true"] .detail-info .edition-picker{margin-top:15px;padding:12px 0;border:0;border-top:1px solid rgba(124,93,48,.2);border-bottom:1px solid rgba(124,93,48,.2);border-radius:0;background:transparent;box-shadow:none}
+body[data-realism="true"] .detail-info .edition-picker label{font-family:'EB Garamond',Georgia,serif;font-size:15px;font-style:italic}
+body[data-realism="true"] .detail-info .edition-picker select{font-size:14px;padding:7px 2px}
+body[data-realism="true"] .detail-primary-rating{margin-top:0}
+body[data-realism="true"] .detail-info .primary-rating{font-size:21px}
+body[data-realism="true"] .detail-info>.toolbar .tag-chip{padding:7px 1px;text-decoration:underline;text-underline-offset:4px;border:0;box-shadow:none}
+body[data-realism="true"] .detail-info>div:has(>.lib-btn),body[data-realism="true"] .detail-info>div:has(>div>.lib-btn){background:transparent!important;padding:18px 0!important;border:0!important;border-top:1px solid rgba(124,93,48,.28)!important;border-bottom:1px solid rgba(124,93,48,.28)!important;border-radius:0!important}
+body[data-realism="true"] .detail-info .lib-btn{border-radius:2px;padding:9px 12px;font-size:15px;box-shadow:0 2px 0 rgba(91,61,23,.06)}
+body[data-realism="true"] .detail-info .rcard{background:transparent;border:0;border-top:1px solid rgba(124,93,48,.28);border-radius:0;padding:12px 2px;box-shadow:none}
+body[data-realism="true"] .detail-info .rating-grid{gap:12px!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+body[data-realism="true"] .detail-layout:after{content:"Poznámky pokračují · posuň papír";position:absolute;z-index:2;left:48.5%;bottom:11.5%;width:34%;text-align:center;padding:13px 0 2px;color:#7c684a;background:linear-gradient(transparent,rgba(236,222,193,.85) 70%);font:italic 12px/1.2 'EB Garamond',Georgia,serif;pointer-events:none}
+body[data-realism="true"] #readerDialog{background:var(--real-paper);background-image:var(--real-paper-grain);border:1px solid var(--real-paper-edge);border-radius:3px;box-shadow:0 18px 60px rgba(12,7,2,.5)}
+body[data-realism="true"] .toast{background:var(--real-paper);background-image:var(--real-paper-grain);color:var(--real-ink);border:1px solid var(--real-paper-edge);border-radius:2px;box-shadow:0 5px 20px rgba(14,8,2,.4);bottom:88px}
+
+@media(max-width:1100px){
+  body[data-realism="true"] main{padding:24px 22px 110px}
+  body[data-realism="true"] .room-navigation button,body[data-realism="true"] .room-navigation a{padding:7px 10px;font-size:16px}
+  body[data-realism="true"] .room-scene>.room-navigation{left:53%;max-width:45%}
+  body[data-realism="true"] .detail-info{left:46%;width:38.5%;padding-right:9px}
+  body[data-realism="true"] .detail-info h1{font-size:32px!important}
+  body[data-realism="true"] .detail-info .desc{font-size:17px}
+  body[data-realism="true"] .detail-info .lib-btn{padding:8px 9px;font-size:14px}
+  body[data-realism="true"] .detail-info>div:nth-child(2){font-size:18px!important;margin-bottom:10px!important}
+}
+@media(max-width:800px){
+  body[data-realism="true"] .room-home{min-height:700px;height:100dvh}
+  body[data-realism="true"] .room-scene{width:max(100vw,calc(100dvh * 1.59879))}
+  body[data-realism="true"] .room-reception{left:46.8%;width:29.5%;top:47%;height:19%;padding-left:3.5%;padding-right:2.5%}
+  body[data-realism="true"] .room-reception h1{font-size:clamp(27px,2.8cqw,43px)}
+  body[data-realism="true"] .room-reception .hsearch-wrap input{font-size:clamp(17px,1.8cqw,24px)}
+  body[data-realism="true"] .room-reception>p{font-size:clamp(13px,1.2cqw,18px)}
+  body[data-realism="true"] .room-reception .tag-chip{font-size:clamp(13px,1.15cqw,17px)}
+  body[data-realism="true"] .shelf-section{border-left-width:13px;border-right-width:13px;padding-left:5px;padding-right:5px}
+  body[data-realism="true"] .search-page{padding:22px 18px}
+  body[data-realism="true"] .search-page .grid{border-width:9px;padding:20px 13px;gap:30px 19px}
+  body[data-realism="true"] .room-navigation{right:18px;bottom:18px}
+  body[data-realism="true"][data-view="detail"] main{padding:18px 14px 110px}
+  body[data-realism="true"] .detail-layout{min-height:0;aspect-ratio:1586/992;background-size:100% 100%;background-position:center}
+  body[data-realism="true"] .detail-info{left:47.5%;width:35.1%;top:14%;height:72%;padding-left:2px}
+  body[data-realism="true"] .detail-info h1{font-size:29px!important}
+  body[data-realism="true"] .detail-cover{left:13.5%;width:25%!important;top:25%!important}
+}
+@media(max-width:600px), (max-width:1000px) and (max-aspect-ratio:1/1){
+  /* A closer reception view on touch screens. The paper and shelf remain physical. */
+  body[data-realism="true"] main{padding:18px 12px 110px}
+  body[data-realism="true"] .room-home{height:auto;min-height:100dvh;overflow:hidden;background:linear-gradient(rgba(23,14,6,.12),rgba(23,14,6,.22)),var(--room-photo) 53% top / auto 850px no-repeat,var(--wood-base)}
+  body[data-realism="true"] .room-scene{position:relative;left:auto;top:auto;width:100%;height:auto;min-height:100dvh;padding:clamp(210px,31dvh,290px) 22px 118px;aspect-ratio:auto;transform:none!important;container-type:normal}
+  body[data-realism="true"] .room-scene:before{display:none}
+  body[data-realism="true"] .room-scene:after{z-index:-1;background:linear-gradient(transparent 350px,rgba(20,11,3,.25) 680px);mix-blend-mode:normal}
+  body.dark[data-realism="true"] .room-home{background:linear-gradient(rgba(4,8,14,.45),rgba(4,8,14,.6)),var(--room-photo) 53% top / auto 850px no-repeat,var(--wood-base)}
+  body[data-realism="true"] .room-reception{position:relative;left:auto;top:auto;width:100%;height:auto;min-height:220px;padding:26px 23px 23px;transform:rotate(-1deg);background:#eee2ca;background-image:var(--real-paper-grain);border:1px solid #c2ae87;box-shadow:0 5px 0 #85603a,0 7px 0 #543719,0 12px 20px rgba(12,6,2,.38),inset 0 0 25px rgba(130,98,47,.07)}
+  body[data-realism="true"] .room-reception h1{font-size:39px;margin-bottom:9px}
+  body[data-realism="true"] .room-reception>p{font-size:15px;margin-bottom:13px}
+  body[data-realism="true"] .room-reception .hsearch-wrap{padding:12px 1px;gap:9px}
+  body[data-realism="true"] .room-reception .hsearch-wrap input{font-size:20px}
+  body[data-realism="true"] .room-reception .hsearch-wrap svg{width:19px}
+  body[data-realism="true"] .room-reception .home-tags,body[data-realism="true"] .room-moods{gap:2px 13px;margin-top:12px!important}
+  body[data-realism="true"] .room-reception .tag-chip{font-size:14px;min-height:35px;padding:7px 0}
+  body[data-realism="true"] .room-plaque{position:relative;left:auto;top:auto;width:max-content;max-width:100%;height:auto;margin:41px auto 0;padding:10px 21px;transform:rotate(.7deg);font-size:22px;border:1px solid #775227;background:linear-gradient(110deg,#d5ba7e,#b49359 55%,#d1b783);box-shadow:0 3px 5px rgba(15,7,2,.5),inset 0 1px 0 rgba(255,236,186,.5)}
+  body[data-realism="true"] .room-featured{position:relative;inset:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px 18px;margin-top:16px;padding:28px 18px 32px;border:9px solid var(--wood-edge);background-color:var(--wood-base);background-image:linear-gradient(90deg,var(--wood-inset),transparent 15% 85%,var(--wood-inset)),linear-gradient(var(--wood-tone),var(--wood-tone)),var(--wood-texture);background-size:auto,auto,700px 470px;box-shadow:inset 0 9px 17px var(--wood-inset),0 12px 22px rgba(17,8,2,.4);pointer-events:auto}
+  body[data-realism="true"] .room-book:nth-child(n){position:relative;left:auto;bottom:auto;width:100%;height:auto;aspect-ratio:2/3.1}
+  body[data-realism="true"] .room-book:nth-child(n)>.cover{transform:rotate(-1deg);filter:none;box-shadow:3px 1px 0 #c8b98d,5px 3px 0 #44311b,7px 7px 8px rgba(12,6,2,.6)}
+  body[data-realism="true"] .room-book:nth-child(2n)>.cover{transform:rotate(1deg)}
+  body[data-realism="true"] .room-book .c-title{font-size:14px!important}
+  body[data-realism="true"] .room-book .c-author{font-size:9px}
+  body[data-realism="true"] .room-book-label{display:none}
+  body[data-realism="true"] .room-navigation,body[data-realism="true"] .room-scene>.room-navigation{position:fixed;left:50%;right:auto;top:auto;bottom:max(16px,env(safe-area-inset-bottom));width:max-content;max-width:calc(100vw - 24px);padding:4px 10px;transform:translateX(-50%);z-index:50}
+  body[data-realism="true"] .room-navigation button,body[data-realism="true"] .room-navigation a{min-height:44px;padding:8px 10px;font-size:16px}
+  body[data-realism="true"] .room-navigation .appearance-toggle>span{display:inline}
+  body[data-realism="true"] .room-navigation .appearance-panel{position:fixed;right:0;bottom:calc(100% + 16px);width:min(336px,calc(100vw - 28px));max-height:calc(100dvh - 114px);transform:none}
+  body[data-realism="true"] .library-head{padding:19px}
+  body[data-realism="true"] .library-page>.toolbar{width:100%;padding:9px;gap:7px}
+  body[data-realism="true"] .shelf-section{border-left-width:9px;border-right-width:9px;padding:48px 3px 0}
+  body[data-realism="true"] .shelf-section h2{font-size:18px;padding:6px 19px}
+  body[data-realism="true"] .search-page{padding:21px 14px}
+  body[data-realism="true"] .search-page .grid{border-width:7px;padding:18px 10px;gap:27px 15px;margin-left:-4px;margin-right:-4px}
+  body[data-realism="true"] .search-page .book-card>div:not(.cover){padding:8px}
+  body[data-realism="true"] .detail-layout{min-height:0;aspect-ratio:auto;padding:35px 17px 24px!important;background-color:var(--wood-base);background-image:linear-gradient(var(--wood-tone),var(--wood-tone)),var(--wood-texture);background-size:auto,800px 540px}
+  body[data-realism="true"] .detail-layout:before,body[data-realism="true"] .detail-layout:after{display:none}
+  body[data-realism="true"] .detail-cover{position:relative!important;left:auto;top:auto!important;width:52%!important;max-width:230px;margin:0 auto 47px!important;transform:rotate(-6deg)}
+  body[data-realism="true"] .detail-info{position:relative!important;left:auto;top:auto;width:100%;height:auto;max-height:none;overflow:visible;padding:24px 19px 30px;background:var(--real-paper);background-image:var(--real-paper-grain);border:1px solid var(--real-paper-edge);box-shadow:0 6px 18px rgba(23,11,3,.38);transform:rotate(.35deg)}
+  body[data-realism="true"] .detail-info h1{font-size:34px!important}
+  body[data-realism="true"] .detail-info .desc{font-size:18px}
+  body[data-realism="true"] .detail-info .book-meta{font-size:13px}
+  body[data-realism="true"] .detail-info .lib-btn{font-size:15px;padding:10px 12px}
+}
+@media(max-width:360px){
+  body[data-realism="true"] .room-scene{padding-left:14px;padding-right:14px}
+  body[data-realism="true"] .room-reception{padding-left:18px;padding-right:18px}
+  body[data-realism="true"] .room-reception h1{font-size:35px}
+  body[data-realism="true"] .room-navigation button,body[data-realism="true"] .room-navigation a{padding:8px 7px;font-size:15px;gap:5px}
+  body[data-realism="true"] .room-navigation .appearance-picker{padding-left:2px;margin-left:2px}
+  body[data-realism="true"] .room-featured{gap:28px 13px;padding:24px 13px}
+}
+@media(prefers-reduced-motion:reduce){
+  body[data-realism="true"] .room-scene{--room-look-x:0deg!important;--room-look-y:0deg!important;--room-look-shift-x:0px!important;--room-look-shift-y:0px!important}
+  body[data-realism="true"] .room-book>.cover,body[data-realism="true"] .detail-cover{transition:none}
+}
+/* Scene actions are ink on paper and small fittings, never browser-default buttons. */
+body[data-realism="true"] .room-reception .hsearch-wrap>button{display:grid;place-items:center;flex:none;width:34px;height:34px;padding:4px;border:0;background:transparent;color:#685132;cursor:pointer}
+body[data-realism="true"] .room-moods>button{min-height:0;padding:1px 0;border:0;border-bottom:1px solid rgba(92,66,31,.2);border-radius:0;background:transparent;box-shadow:none;font:italic clamp(12px,1.01cqw,18px)/1.35 'EB Garamond',Georgia,serif;color:#74593b;cursor:pointer}
+body[data-realism="true"] .room-moods>button:hover{border-bottom-color:#74593b;color:#352616}
+body[data-realism="true"] .room-book-label small{display:block;margin-top:3px;font-size:.8em;opacity:.8}
+body[data-realism="true"] .room-next{position:absolute;left:3%;top:83%;width:13.2%;z-index:4;padding:.65% .8%;border:1px solid rgba(64,39,12,.8);border-radius:2px;background:linear-gradient(110deg,#bda16b,#96713d 60%,#ba9b61);color:#39250e;box-shadow:0 2px 3px rgba(10,4,1,.6),inset 0 1px 0 rgba(245,218,156,.5);text-shadow:0 1px 0 rgba(246,217,156,.28);font:500 clamp(12px,1.1cqw,19px)/1.25 'EB Garamond',Georgia,serif;transform:skewY(-15deg);cursor:pointer}
+body[data-realism="true"] .room-next:disabled{opacity:.48;cursor:default}
+body[data-realism="true"] .room-directory{position:absolute;left:32%;top:72%;z-index:35;width:18%;color:#5e482a;transform:rotate(-5deg)}
+body[data-realism="true"] .room-directory>summary{display:block;padding:12px 15px;border:1px solid #bb9f71;border-radius:1px;background:#e5d5b3;background-image:var(--real-paper-grain);box-shadow:0 3px 0 #c6af87,0 5px 0 #6d4d28,0 7px 10px rgba(21,10,2,.35);font:italic clamp(13px,1.2cqw,22px)/1.2 'EB Garamond',Georgia,serif;text-align:center;cursor:pointer;list-style:none}
+body[data-realism="true"] .room-directory>summary::-webkit-details-marker{display:none}
+body[data-realism="true"] .room-directory>summary:after{content:" ↗";font-style:normal}
+body[data-realism="true"] .room-directory[open]>summary:after{content:" ↓"}
+body[data-realism="true"] .room-directory>div{position:absolute;left:0;bottom:calc(100% + 13px);width:355px;max-width:calc(100vw - 36px);max-height:55vh;overflow:auto;overscroll-behavior:auto;padding:19px 22px;background:var(--real-paper);background-image:var(--real-paper-grain);color:var(--real-ink);border:1px solid var(--real-paper-edge);box-shadow:0 7px 24px rgba(13,6,1,.5);transform:rotate(5deg);transform-origin:left bottom}
+body[data-realism="true"] .room-directory .toolbar{gap:7px;margin:0 0 12px}
+body[data-realism="true"] .room-directory .tag-chip{font-size:14px;padding:7px 9px}
+body[data-realism="true"] .room-directory-moods{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px}
+body[data-realism="true"] .room-search{max-width:600px;min-width:0;margin:15px 0 22px;padding:9px 0;border:0;border-bottom:1.5px solid #a28a61;border-radius:0;background:transparent;box-shadow:none}
+body[data-realism="true"] .room-search:focus-within{box-shadow:0 2px 0 rgba(112,77,30,.25)}
+body[data-realism="true"] .room-search input{font-style:italic;font-size:20px}
+body[data-realism="true"] .search-page>*,body[data-realism="true"] .library-page>*{position:relative;z-index:2}
+body[data-realism="true"] .detail-info{z-index:2}
+body[data-realism="true"] .room-plaque{z-index:2}
+body[data-realism="true"] .room-navigation[hidden]{display:none}
+@media(max-width:800px){
+  body[data-realism="true"] .room-directory{left:30%;width:19%}
+  body[data-realism="true"] .room-scene>.room-navigation{left:48%;max-width:49%}
+  body[data-realism="true"] .room-navigation .room-nav-home{display:none}
+}
+@media(max-width:760px){
+  body[data-realism="true"] .detail-layout{min-height:0;aspect-ratio:auto;padding:35px 22px 28px!important;background-color:var(--wood-base);background-image:linear-gradient(var(--wood-tone),var(--wood-tone)),var(--wood-texture);background-size:auto,800px 540px}
+  body[data-realism="true"] .detail-layout:before,body[data-realism="true"] .detail-layout:after{display:none}
+  body[data-realism="true"] .detail-cover{position:relative!important;left:auto;top:auto!important;width:45%!important;max-width:240px;margin:0 auto 48px!important;transform:rotate(-6deg)}
+  body[data-realism="true"] .detail-info{position:relative!important;left:auto;top:auto;width:100%;height:auto;max-height:none;overflow:visible;padding:27px 25px 33px;background:var(--real-paper);background-image:var(--real-paper-grain);border:1px solid var(--real-paper-edge);box-shadow:0 6px 18px rgba(23,11,3,.38);transform:rotate(.35deg)}
+  body[data-realism="true"] .detail-info h1{font-size:34px!important}
+  body[data-realism="true"] .detail-info .desc{font-size:18px}
+}
+@media(max-width:600px), (max-width:1000px) and (max-aspect-ratio:1/1){
+  body[data-realism="true"] .room-moods>button{font-size:15px;min-height:35px;padding:7px 0}
+  body[data-realism="true"] .room-next{position:relative;left:auto;top:auto;display:block;width:max-content;margin:17px auto 0;padding:10px 18px;min-height:44px;font-size:17px;transform:rotate(-1deg)}
+  body[data-realism="true"] .room-directory{position:relative;left:auto;top:auto;width:75%;max-width:280px;margin:25px auto 0;transform:rotate(-2deg)}
+  body[data-realism="true"] .room-directory>summary{min-height:44px;font-size:19px;padding:13px}
+  body[data-realism="true"] .room-directory>div{position:relative;left:auto;bottom:auto;max-height:none;width:100%;max-width:100%;margin:15px 0 0;padding:20px 16px;transform:rotate(2deg)}
+  body[data-realism="true"] .room-directory .toolbar{flex-direction:column;align-items:stretch}
+  body[data-realism="true"] .room-directory .tag-chip{min-height:40px}
+  body[data-realism="true"] .room-scene>.room-navigation{left:50%;max-width:calc(100vw - 24px)}
+  body[data-realism="true"] .detail-info{padding:24px 17px 30px}
+}

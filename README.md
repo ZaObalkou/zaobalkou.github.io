@@ -12,6 +12,15 @@
 - **Knihovna s tebou:** lokálně vytvořený komprimovaný odkaz a QR kód přenesou současný snímek knihovny včetně pokroku a jazykových verzí. Otevření odkazu samo knihovnu nepřepíše; uživatel potvrdí přidání a zvolí, který pokrok zachovat. Není to průběžná synchronizace. Pro velkou knihovnu se nabídne odkaz bez QR, překročení limitu odkazu se oznámí bez ztráty knihovny. QR se generuje místně bez služby třetí strany.
 - **Excel:** skutečný `.xlsx` se čtyřmi sloupci Název knihy, Autor, Rok vydání, Série a díl. Názvy mají nativní hypertextový odkaz na detail knihy na webu. První řádek je ukotvený a tabulku lze filtrovat. Prázdná série znamená chybějící údaj, nikoli hádané pořadí.
 - **Pět pastelových motivů:** broskev, levandule, šalvěj, růže a modrá. Ukládají se do prohlížeče a fungují se světlým i tmavým režimem. Promění ikony, odznaky, odkazy, pozadí i náhradní obálky.
+- **Jedno menu Vzhled** spojuje světlo, barvu a volitelnou realistickou knihovnu. Výchozí běžný vzhled se nemění. Režim realismu má recepci s hledáním na papírovém stojánku, skutečné knižní obálky na předních policích, mosaznou navigaci, dřevěnou knihovnu a detail na čtenářském stole. Dub, smrk, bříza, třešeň a akácie mají samostatné obrazové materiály; výběr dřeva se pamatuje odděleně od pastelové barvy.
+
+## Realistické prostředí
+
+`appearance.js` vlastní preference a jediné menu. Zachovává původní `mzr_theme` / `mzr_palette`, přidává `za_realism` / `za_wood` a oznamuje změnu událostí `za:appearance`. Přepnutí vzhledu nepřepisuje knihovnu. Menu se při výměně scény přesouvá jako stejný DOM prvek, takže neztrácí posluchače ani rozbalený stav.
+
+Prostředí kombinuje fotorealistické obrazové podklady, prostorové knižní prvky CSS a transparentní Three.js vrstvu světla a prachu. Jemný pohyb podle myši posouvá společně pozadí i skutečné ovládací prvky. Jde o řízené prostorové scény, nikoli o model celé budovy pro volné procházení. Three.js se načte pouze při zapnutém realismu; vypnutí uvolní grafické prostředky. Neaktivní karta animaci pozastaví, dotyk nepotřebuje najetí myší a omezení pohybu je respektováno. Při nedostupném WebGL zůstávají obrazové prostředí, knihy i všechny ovládací prvky funkční.
+
+Obrazové materiály vznikly pro tento projekt pomocí generování a návazných materiálových úprav. WebP soubory zachovávají původní rozměry; PNG pracovní originály nejsou potřebné pro běh. Three.js 0.180.0 je uložen místně v `vendor/` včetně licence MIT, nevyžaduje externí CDN.
 
 ## Datové zdroje a jejich hranice
 
@@ -35,7 +44,7 @@ Veřejné katalogy nemají všechny české překlady, vydání ani počty stran
 
 ## Soubory a nasazení
 
-Nahraj všechny kořenové HTML, JS, CSS a `goodreads-ratings.json` soubory do kořene `main`, testy do `tests/`. `index.html` potřebuje `book-core.js`, `catalogue-client.js`, `catalogue-data.js`, `catalogue-cs.js`, `config.js`, `library-tools.js`, `qrcodegen.js`, `theme-palette.js`, `theme-palette.css` `reader-tools.css`, `bookshelf.js`, `bookshelf.css`, `polish.css`, `goodreads-catalogue.js`, `goodreads-client.js` a `goodreads-bridge.html`. `qrcodegen.js` pochází z projektu Nayuki, licence MIT je zachovaná v souboru. Staré HTML vstupy přesměrovávají na index.
+Nahraj kořenové HTML, JS, CSS a `goodreads-ratings.json` soubory do kořene `main`, testy do `tests/`, obrazové WebP soubory do `assets/`, Three.js moduly a licenci do `vendor/` a aktualizační skript do `scripts/`. `index.html` potřebuje `book-core.js`, `catalogue-client.js`, `catalogue-data.js`, `catalogue-cs.js`, `config.js`, `library-tools.js`, `qrcodegen.js`, `theme-palette.css`, `reader-tools.css`, `bookshelf.js`, `bookshelf.css`, `polish.css`, `goodreads-catalogue.js`, `goodreads-client.js`, `goodreads-bridge.html`, `appearance.js`, `appearance.css`, `realism-scene.js` a `realism.css`. Původní `theme-palette.js` se již nenačítá. `qrcodegen.js` pochází z projektu Nayuki, licence MIT je zachovaná v souboru. Staré HTML vstupy přesměrovávají na index.
 
 Lokální spuštění: `python3 -m http.server 8765`. Testy: `node --test tests/*.test.cjs` (Node20+; test čtení XLSX používá také Python/openpyxl). Testy zahrnují skutečné OOXML odkazy, kompresi a validaci přenosu, edice/jazyky/roky, výpadky, štítky, souběh a ukládání pokroku. Regresní testy používají odpovědi katalogů a malý DOM adaptér, proto je doplňuje kontrola živého webu v prohlížeči.
 

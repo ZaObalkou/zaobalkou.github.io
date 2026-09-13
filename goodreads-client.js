@@ -46,9 +46,11 @@
       }catch(e){}
     }
     function apply(book,row,grId){
+      var carriedTime=Date.parse(book.grCheckedAt),carried=valid({rating:book.grRating,count:book.grCount,url:book.grUrl},grId)&&Number.isFinite(carriedTime);
+      if(carried&&now()-carriedTime>=ttl&&book.grSnapshot!==true)book=Object.assign({},book,{grSnapshot:true});
       if(!row||!matchesTitle(book,row))return book;
       // A newer rating carried by a saved edition must survive an older cache.
-      if(urlID(book.grUrl)===grId&&Number.isFinite(Date.parse(book.grCheckedAt))&&Date.parse(book.grCheckedAt)>Date.parse(row.checkedAt)&&valid({rating:book.grRating,count:book.grCount,url:book.grUrl},grId))return book;
+      if(carried&&carriedTime>Date.parse(row.checkedAt))return book;
       return Object.assign({},book,{grRating:row.rating,grCount:row.count,grUrl:row.url,grCheckedAt:row.checkedAt,grScope:'work',grSnapshot:now()-Date.parse(row.checkedAt)>=ttl});
     }
     function getCached(book){var grId=bookID(book);return grId?apply(book,read(grId),grId):book;}
