@@ -25,6 +25,20 @@ test('grouping selects requested language/year but retains full edition choices'
  assert.equal(groups[0].editions.length,3);assert(groups[0].editions.every(e=>!e.editions));
  assert.equal(Core.groupWorks([cz,en],{language:'de'}).length,0);
 });
+test('default representative prefers an identified edition over an unknown store record without transferring edition facts',()=>{
+ const store=book('a:6477693290',{editionId:'a:6477693290',source:'Apple Books',title:'Book Lovers',author:'Emily Henry',year:2024,language:'',pages:0});
+ const paperback=book('/books/OL34990822M',{editionId:'/books/OL34990822M',olEditionId:'/books/OL34990822M',title:'Book Lovers',author:'Emily Henry',year:2022,yearKind:'edition',language:'en',pages:384,isbn:'9780593334836'});
+ const group=Core.groupWorks([store,paperback],{query:'Book Lovers'})[0];
+ assert.equal(group.id,paperback.id);assert.equal(group.language,'en');assert.equal(group.pages,384);assert.equal(group.year,2022);assert.equal(group.isbn,paperback.isbn);
+ const untouched=group.editions.find(b=>b.id===store.id);assert.equal(untouched.language,'');assert.equal(untouched.pages,0);assert.equal(untouched.year,2024);assert.equal(untouched.isbn,undefined);
+ assert.equal(Core.groupWorks([store,paperback],{year:'2024'})[0].id,store.id);
+ assert.equal(Core.groupWorks([store,paperback],{language:'en'})[0].id,paperback.id);
+ assert.equal(Core.groupWorks([store,paperback],{language:'cs'}).length,0);
+ assert.equal(Core.groupWorks([store,paperback],{sort:'newest'})[0].id,store.id);
+ const isbnStore={...store,isbn:'9780241995341'};assert.equal(Core.groupWorks([isbnStore,paperback],{query:isbnStore.isbn})[0].id,store.id);
+ // A selected language is meaningful even when that edition lacks its pages.
+ assert.equal(Core.groupWorks([{...store,language:'cs'},paperback])[0].id,store.id);
+});
 test('work grouping shares Open Library work ratings but never edition-specific ratings',()=>{
  const cz=book('cz',{workId:'work:1',isbn:'9781234567890',verified:true});
  const en=book('en',{workId:'work:1',isbn:'9781234567891',language:'en',olRating:4.3,olCount:800,aRating:4.9,aCount:500,gRating:4.7,gCount:900});
