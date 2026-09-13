@@ -1,6 +1,6 @@
 /* Small, source-checked starting catalogue. Edition metadata must not be copied
  * between translations. Descriptions are original summaries, not publisher copy.
- * Checked 2026-09-12. Live catalogue providers supply additional books. */
+ * Each edition records its verification date. Live providers supply additional books. */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.CatalogueData = factory();
@@ -173,6 +173,60 @@
     tags: ['young adult', 'romantasy', 'fantasy', 'romantika', 'magie', 'pohádky'],
     desc: 'Evangelína chce zabránit svatbě své lásky a uzavírá dohodu se Srdcovým princem. Za jeho pomoc slíbí tři polibky, jejichž následky zatím nedokáže odhadnout.',
     source: 'Naše nakladatelství', link: 'https://www.nasenakladatelstvi.cz/produkt/bylo-nebylo-jedno-zlomene-srdce'
+  }, {});
+
+  // Czech science-fiction editions: publisher metadata and the publisher group's
+  // own retail catalogue identify the language, pages and ISBN of each edition.
+  edition('project-hail-mary', {
+    title: 'Spasitel', aliases: ['Project Hail Mary'], author: 'Andy Weir',
+    year: 2026, pages: 464, language: 'cs', isbn: '9788028415426',
+    tags: ['sci-fi', 'dobrodružství', 'přátelství'],
+    desc: 'Ryland Grace se probouzí na vesmírné lodi bez vzpomínek na svou misi. Daleko od Země musí vyřešit vědeckou záhadu a najít způsob, jak zachránit lidstvo.',
+    source: 'Laser / Luxor', link: 'https://www.luxor.cz/v/2147151/spasitel', verifiedAt: '2026-09-13',
+    coverUrl: 'https://img.luxor.cz/detail_big/279/428/produkty/9788028415426.jpg?cbk=986512'
+  }, {});
+
+  edition('wool', {
+    title: 'Silo', aliases: ['Wool', 'Wool Omnibus', 'The Wool Omnibus'], author: 'Hugh Howey',
+    year: 2025, pages: 520, language: 'cs', isbn: '9788028411978', series: 'Silo', seriesNumber: 1,
+    tags: ['sci-fi', 'dystopie', 'dobrodružství'],
+    desc: 'Lidé přežívají v podzemním silu a povrch znají jen ze záběrů kamer. Mechanička Juliette začne zpochybňovat pravidla komunity i příběh o světě za jejími zdmi.',
+    source: 'Laser / Luxor', link: 'https://www.luxor.cz/v/2116366/silo', verifiedAt: '2026-09-13',
+    coverUrl: 'https://img.luxor.cz/detail_big/279/428/produkty/9788028411978.jpg?cbk=986512'
+  }, {});
+
+  edition('dune', {
+    title: 'Duna', aliases: ['Dune'], author: 'Frank Herbert',
+    year: 2020, pages: 640, language: 'cs', isbn: '9788026914051', series: 'Duna', seriesNumber: 1,
+    tags: ['sci-fi', 'dobrodružství', 'království', 'válka'],
+    desc: 'Paul Atreides přijíždí na pouštní planetu Arrakis, jediný zdroj vzácného koření. Boj velkorodů o její kontrolu propojuje politické intriky, ekologii a osud místních obyvatel.',
+    source: 'Albatros Media', link: 'https://www.albatrosmedia.cz/tituly/89984231/duna/', verifiedAt: '2026-09-13'
+  }, {});
+
+  edition('the-three-body-problem', {
+    title: 'Problém tří těles', aliases: ['The Three-Body Problem', 'The Three Body Problem'],
+    author: "Liou Cch'-sin", authorAliases: ['Cixin Liu', 'Liu Cixin'],
+    year: 2017, pages: 447, language: 'cs', isbn: '9788075770615', series: 'Vzpomínka na Zemi', seriesNumber: 1,
+    tags: ['sci-fi', 'vyšetřování'],
+    desc: 'Záhadné události ve vědecké komunitě přivedou výzkumníka Wanga Miaa k neobvyklé počítačové hře. Pátrání odhaluje spojení mezi čínskou minulostí a budoucností lidstva.',
+    source: 'Nakladatelství Host', link: 'https://www.hostbrno.cz/problem-tri-teles', verifiedAt: '2026-09-13'
+  }, {});
+
+  edition('the-long-way-to-a-small-angry-planet', {
+    title: 'Dlouhá cesta na malou, rozzlobenou planetu', aliases: ['The Long Way to a Small, Angry Planet'],
+    author: 'Becky Chambers', authorAliases: ['Becky Chambersová'],
+    year: 2017, pages: 494, language: 'cs', isbn: '9788075771445', series: 'Poutníci', seriesNumber: 1,
+    tags: ['sci-fi', 'dobrodružství', 'přátelství'],
+    desc: 'Rosemary hledá nový začátek na lodi Poutník. Její různorodá posádka přijímá zakázku na stavbu hyperprostorového tunelu a během dlouhé cesty se učí žít s rozdíly i tajemstvími svých členů.',
+    source: 'Nakladatelství Host', link: 'https://www.hostbrno.cz/dlouha-cesta-na-malou-rozzlobenou-planetu/', verifiedAt: '2026-09-13'
+  }, {});
+
+  edition('the-diabolic', {
+    title: 'Diabolik', aliases: ['The Diabolic'], author: 'S. J. Kincaid', authorAliases: ['S. J. Kincaidová'],
+    year: 2017, pages: 376, language: 'cs', isbn: '9788025333730', series: 'Diabolik', seriesNumber: 1,
+    tags: ['sci-fi', 'thriller', 'young adult', 'království'],
+    desc: 'Nemesis byla stvořena, aby chránila dceru galaktického senátora. Když se za ni vydá na císařský dvůr, musí skrýt svou identitu a obstát mezi politickými protivníky.',
+    source: 'Albatros Media', link: 'https://www.albatrosmedia.cz/tituly/34722670/diabolik/', verifiedAt: '2026-09-13'
   }, {});
 
   sources.push({name: 'Alexandra Moody – témata série Darling Devils', url: 'https://www.alexandramoody.com/darlingdevils', checkedAt: '2026-09-12'});

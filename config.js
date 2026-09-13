@@ -2,6 +2,6 @@
    Never put service-account credentials or private tokens here. */
 window.MZR_CONFIG = {
   googleBooksApiKey: '',
-  // Optional same-origin JSON maintained from an authorized Goodreads source.
-  goodreadsRatingsUrl: ''
+  // Source-checked saved ratings; the UI labels snapshots separately from live data.
+  goodreadsRatingsUrl: 'goodreads-ratings.json?v=20260913-1'
 };

@@ -1,0 +1,20 @@
+{
+  "description": "Source-checked rating snapshots, not a live Goodreads API. checkedAt means source retrieval, not the date these counts were current.",
+  "ratings": [
+    {
+      "workId": "curated:fourth-wing",
+      "isbn": "9788025366882",
+      "title": "Fourth Wing",
+      "author": "Rebecca Yarros",
+      "scope": "work",
+      "rating": 4.56,
+      "count": 3808364,
+      "url": "https://www.goodreads.com/book/show/61431922-fourth-wing",
+      "checkedAt": "2026-09-13",
+      "snapshot": true,
+      "provenance": "indexed-goodreads-page",
+      "note": "Indexovaná stránka Goodreads byla při získání přibližně dva měsíce stará. Přesné datum stavu hodnocení není známé. Český překlad a ISBN ověřeny na stránce vydavatele.",
+      "editionSource": "https://www.albatrosmedia.cz/tituly/89562509/ctvrte-kridlo/"
+    }
+  ]
+}
