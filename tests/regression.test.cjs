@@ -40,7 +40,7 @@ function boot({fetcher=()=>Promise.resolve({ok:false,status:503,json:async()=>({
   const context=vm.createContext({window,document:doc,localStorage,navigator:{},fetch:fetcher,AbortController,URL,Blob,Map,Set,Date,CSS:{escape:x=>x},console,
     setTimeout(fn,ms){let id=++timerId;timers.set(id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id)});
   // Expose lexical bindings only in this test copy, never in the delivered page.
-  const instrument=script.replace(/\}\)\(\);\s*$/,`window.testAPI={state,runSearch,onQuery,applyQuery,goHome,goLibrary,openBook,setStatus,removeFromLib,undoRemove,refreshFeatured,localSearch,searchBooks,searchCombo,loadFeatured,buildRatings,fetchDetail,loadMore,renderMain,applyFilters,routeFromHash,attr,EMBEDDED};})();`);
+  const instrument=script.replace(/\}\)\(\);\s*$/,`window.testAPI={state,runSearch,onQuery,applyQuery,goHome,goLibrary,openBook,setStatus,removeFromLib,undoRemove,refreshFeatured,localSearch,searchBooks,searchCombo,loadFeatured,buildRatings,fetchDetail,loadMore,renderMain,applyFilters,routeFromHash,spineImageHTML,attr,EMBEDDED};})();`);
   vm.runInContext(instrument,context,{filename:'index.html'});
   return {api:window.testAPI,store,timers,events,windowEvents,doc,window,downloads,main:()=>doc.getElementById('main').innerHTML,dialog:()=>doc.getElementById('readerDialog').innerHTML,
     click(action,data={}){element('',{'data-action':action,...data}).dispatch('click');},
@@ -243,4 +243,12 @@ test('typed hashtag aliases run the same search, repeated Enter preserves filter
 test('typed author plus hashtags respects both the query and every tag',async()=>{
  const a=boot();await flush();a.query('Sarah J. Maas #romantasy');await flush();
  assert(a.api.state.results.length>0);assert(a.api.state.results.every(b=>Core.relevance(b,'Sarah J. Maas')>0&&Core.matchesTags(b,['romantasy'])));
+});
+
+test('actual spine artwork wins for the edition and falls back to a safe cover list',async()=>{
+ const a=boot();await flush();const b={id:'photo',title:'Kniha',language:'cs',isbn:'9788025359037',spineUrl:'https://example.org/spine.jpg',coverUrl:'https://example.org/cover.jpg'};
+ const image=a.api.spineImageHTML(b);assert.match(image,/src="https:\/\/example.org\/spine.jpg"/);assert.match(image,/data-spine-original/);assert.match(image,/https:\/\/example.org\/cover.jpg/);
+ assert.doesNotMatch(a.api.spineImageHTML({...b,spineUrl:'javascript:alert(1)'}),/data-spine-original|javascript:/);
+ const sanitized=Core.snapshot(b);assert.equal(sanitized.spineUrl,b.spineUrl);
+ const transferred=await LibraryTools.transferLink({photo:{book:b,status:'want',page:0,pages:200}});const restored=await LibraryTools.parseLibraryFragment(new URL(transferred.url).hash);assert.equal(restored.photo.book.spineUrl,b.spineUrl);
 });
