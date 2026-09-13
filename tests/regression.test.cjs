@@ -6,7 +6,8 @@ const path = require('node:path');
 const vm = require('node:vm');
 const Core = require('../book-core.js');
 const CatalogueClient = require('../catalogue-client.js');
-const CatalogueData = require('../catalogue-data.js');
+const baseData = require('../catalogue-data.js');
+const CatalogueData = {...baseData,books:baseData.books.concat(require('../catalogue-cs.js').books)};
 const LibraryTools = require('../library-tools.js');
 const BookShelf = require('../bookshelf.js');
 const html = fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
@@ -96,6 +97,12 @@ test('startup shows modern recommendations when online sources are unavailable',
   const a=boot();await flush();assert.equal(a.api.state.featuredLoading,false);assert.equal(a.api.state.offlineFeatured,true);
   assert(a.api.state.featured.some(b=>b.title==='Úsvit sklizně'));assert(a.api.state.featured.every(b=>(b.firstPublishYear||b.year)>=2016));
   assert.match(a.main(),/Online katalogy se nepodařilo načíst/);assert.doesNotMatch(a.main(),/BookMoth/);
+});
+test('Czech sci-fi remains browseable immediately during a complete catalogue outage',async()=>{
+ const a=boot();await flush();a.query('#sci-fi');a.change('language','cs');
+ assert(a.api.state.results.length>=60);assert(a.api.state.results.every(b=>b.language==='cs'));
+ assert(a.api.state.results.some(b=>b.title==='Spasitel'));assert(a.api.state.results.some(b=>b.title==='Silo'));
+ await flush();assert(a.api.state.results.length>=60);assert.match(a.main(),/Hledám v místním katalogu/);
 });
 test('Rod Draků search finds the book without accents and with real Czech page metadata',async()=>{
   const a=boot();await flush();a.query('Rod Draku');await flush();
@@ -203,6 +210,17 @@ test('detail back returns to library and export actions are available',async()=>
   const a=boot();await flush();a.click('status',{'data-id':CS_DRAGONS,'data-status':'want'});a.click('library');a.click('open',{'data-id':CS_DRAGONS});await flush();a.click('back');
   assert.equal(a.api.state.view,'library');assert.match(a.main(),/Přenést knihovnu/);assert.match(a.main(),/Stáhnout tabulku Excel/);
   assert.doesNotMatch(a.main(),/Další možnosti uložení|backupImport/);a.click('excel');assert.equal(a.downloads.at(-1).download,'za-obalkou-knihovna.xlsx');
+});
+test('early ratings render before edition metadata and cannot replace a later open book',async()=>{
+ const a=boot();await flush();const callbacks=[],finish=[];
+ a.window.CatalogueClient.detail=(b,onProgress)=>{callbacks.push(onProgress);return new Promise(resolve=>finish.push(()=>resolve(b)));};
+ a.api.openBook(CS_DRAGONS);
+ const rated={...a.api.state.detail,grRating:4.2,grCount:12345,grUrl:'https://www.goodreads.com/book/show/123-title',grCheckedAt:'2026-09-13',grScope:'work',grSnapshot:true};
+ callbacks[0](rated);assert.equal(a.api.state.detailLoading,true);assert.match(a.main(),/Goodreads/);assert.match(a.main(),/Uložené hodnocení/);
+ a.api.openBook(EN_DRAGONS);callbacks[0](rated);
+ assert.equal(a.api.state.detail.id,EN_DRAGONS);assert.equal(a.api.state.detail.language,'en');
+ a.api.goLibrary();callbacks[1]({...rated,id:EN_DRAGONS});assert.equal(a.api.state.view,'library');assert.match(a.main(),/Moje knihovna/);
+ finish.forEach(resolve=>resolve());await flush();assert.equal(a.api.state.view,'library');
 });
 test('year and language select events filter the edition and reset restores all available versions',async()=>{
   const a=boot();await flush();a.query('Rod draků');await flush();a.change('year','2020');await flush();a.change('language','en');await flush();
