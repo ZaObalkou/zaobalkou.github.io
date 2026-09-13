@@ -134,9 +134,9 @@ select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(v
 @media(max-width:420px){.hdr-in nav>.nav-btn[data-action="home"]{display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
-<link rel="stylesheet" href="theme-palette.css?v=20260913-5">
-<link rel="stylesheet" href="reader-tools.css?v=20260913-5">
-<link rel="stylesheet" href="bookshelf.css?v=20260913-5">
+<link rel="stylesheet" href="theme-palette.css?v=20260913-6">
+<link rel="stylesheet" href="reader-tools.css?v=20260913-6">
+<link rel="stylesheet" href="bookshelf.css?v=20260913-6">
 </head>
 <body>
 <a class="skip-link" href="#main">Přeskočit na obsah</a>
@@ -166,14 +166,15 @@ select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(v
 <dialog id="readerDialog" aria-labelledby="dialogTitle"></dialog>
 <div id="toastHost" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=20260913-5"></script>
-<script src="book-core.js?v=20260913-5"></script>
-<script src="catalogue-data.js?v=20260913-5"></script>
-<script src="catalogue-client.js?v=20260913-5"></script>
-<script src="qrcodegen.js?v=20260913-5"></script>
-<script src="library-tools.js?v=20260913-5"></script>
-<script src="bookshelf.js?v=20260913-5"></script>
-<script src="theme-palette.js?v=20260913-5"></script>
+<script src="config.js?v=20260913-6"></script>
+<script src="book-core.js?v=20260913-6"></script>
+<script src="catalogue-data.js?v=20260913-6"></script>
+<script src="catalogue-cs.js?v=20260913-6"></script>
+<script src="catalogue-client.js?v=20260913-6"></script>
+<script src="qrcodegen.js?v=20260913-6"></script>
+<script src="library-tools.js?v=20260913-6"></script>
+<script src="bookshelf.js?v=20260913-6"></script>
+<script src="theme-palette.js?v=20260913-6"></script>
 <script>
 var Core = window.BookCore;
 (function(){
@@ -307,7 +308,7 @@ function buildRatings(b){
     var n=b[p+'Rating'];return {site:{gr:'Goodreads',a:'Apple Books',ol:'Open Library',g:'Google Books'}[p],val:num(n.toFixed(p==='gr'?2:1)),unit:'/ 5',pct:Math.round(n*20),count:Core.integer(b[p+'Count'],100000000),url:p==='gr'?Core.goodreadsURL(b.grUrl):'',snapshot:p==='gr'&&b.grSnapshot===true,scope:p==='gr'?b.grScope:''};
   }).sort(function(a,b){return Number(b.site===(primary||{}).source)-Number(a.site===(primary||{}).source);});
 }
-function fetchDetail(book){return Client.detail(book).then(function(b){b.ratingList=buildRatings(b);return b;});}
+function fetchDetail(book,onProgress){return Client.detail(book,function(b){b.ratingList=buildRatings(b);if(onProgress)onProgress(b);}).then(function(b){b.ratingList=buildRatings(b);return b;});}
 var featuredSeq=0;
 function featuredBooks(list){
   var books=Core.merge([list,EMBEDDED.filter(function(b){return Core.year(b.firstPublishYear||b.year)>=new Date().getFullYear()-10;})]);
@@ -391,13 +392,18 @@ function openBook(id,fromRoute){
   var base=findBook(id);if(!base)return;
   var knownChoices=state.detail&&Core.sameWork(state.detail,base)?state.detail.editions||[]:[];
   base=Object.assign({},base,{editions:Core.merge([base.editions||[],knownChoices,SEEDS.filter(function(b){return Core.sameWork(b,base);}),[base]])});
+  if(Client.getCachedRatings)base=Client.getCachedRatings(base);
   cancelSearch();if(state.view!=='detail')state.returnView=state.view;
   if(!fromRoute)setRoute(LibraryTools.bookLink(base));
   state.view='detail'; state.selectedId=id; state.detail=null; state.detailLoading=true;
   state.detail=Object.assign({},base,{ratingList:buildRatings(base)});
   renderMain(); window.scrollTo(0,0);
   var seq=++detailSeq;
-  fetchDetail(base).then(function(d){ if(seq!==detailSeq||state.view!=='detail')return; state.detail=d;
+  fetchDetail(base,function(partial){
+    if(seq!==detailSeq||state.view!=='detail'||!state.detailLoading)return;
+    state.detail=Object.assign({},state.detail,partial,{editions:partial.editions||state.detail.editions});
+    state.detail.ratingList=buildRatings(state.detail);renderMain();
+  }).then(function(d){ if(seq!==detailSeq||state.view!=='detail')return; state.detail=d;
     var savedId=Object.keys(state.lib).find(function(k){return k===id||Core.sameBook(state.lib[k].book,d);}),cur=state.lib[savedId]; if(cur){cur.book=snapshot(Object.assign({},d,{id:savedId}));if(!cur.pagesManual&&!cur.pages&&d.pages)cur.pages=d.pages;saveLib();}
     state.detailLoading=false; renderMain(); })
   .catch(function(){ if(seq!==detailSeq||state.view!=='detail')return; state.detail=Object.assign({},base,{desc:cleanDesc(base.desc)||'Popis se nepodařilo načíst.',ratingList:buildRatings(base)}); state.detailLoading=false; renderMain(); });
@@ -596,7 +602,7 @@ function searchHTML(){
   var n=state.results.length;
   if(state.query)h+='<p>Hledáš: <strong>'+esc(state.query)+'</strong></p>';
   h+='<p style="color:var(--faint);font-size:16.5px;margin:0 0 18px">'+n+' '+plkn(n)+(n>=100?'+':'')+' v načteném výběru</p>';
-  if(state.offlineSearch){ h+='<div class="notice">Online katalogy se nepodařilo načíst. Hledám v uložené knihovně a redakčním výběru.</div>'; }
+  if(state.offlineSearch){ h+='<div class="notice">Online katalogy se nepodařilo načíst. Hledám v místním katalogu a tvojí knihovně.</div>'; }
   h+=sourceStatus(state.searchIssues);
   if(state.offlineSearch)h+='<button class="tag-chip" data-action="retry">Zkusit online hledání znovu</button>';
   if(!n && state.rawResults.length)h+='<div class="notice">Knihy byly nalezeny, ale neodpovídají filtrům. <button class="tag-chip" data-action="resetFilters">Zrušit filtry</button></div>';
@@ -648,7 +654,7 @@ function detailHTML(){
           + (r.snapshot?'<p class="book-meta">Uložené hodnocení; aktuální počet a průměr se mohou lišit.</p>':'')
           + (r.url?'<a class="book-meta" href="'+attr(r.url)+'" target="_blank" rel="noopener">Aktuální hodnocení na Goodreads ↗</a>':'')+'</div>';
       }).join('');
-    } else { ratings='<p style="color:var(--faint)">Pro tuto knihu se zatím nepodařilo načíst hodnocení.</p>'; }
+    } else { ratings='<p style="color:var(--faint)" role="status">'+(state.detailLoading?'Načítám dostupná hodnocení…':'Pro tuto knihu se zatím nepodařilo načíst hodnocení.')+'</p>'; }
   } else { ratings=spinner(); }
   var progress='';
   if(status==='reading'){
