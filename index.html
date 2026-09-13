@@ -134,12 +134,12 @@ select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(v
 @media(max-width:420px){.hdr-in nav>.nav-btn[data-action="home"]{display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
-<link rel="stylesheet" href="theme-palette.css?v=20260913-11">
-<link rel="stylesheet" href="reader-tools.css?v=20260913-11">
-<link rel="stylesheet" href="bookshelf.css?v=20260913-11">
-<link rel="stylesheet" href="polish.css?v=20260913-11">
-<link rel="stylesheet" href="appearance.css?v=20260913-11">
-<link rel="stylesheet" href="realism.css?v=20260913-11">
+<link rel="stylesheet" href="theme-palette.css?v=20260913-12">
+<link rel="stylesheet" href="reader-tools.css?v=20260913-12">
+<link rel="stylesheet" href="bookshelf.css?v=20260913-12">
+<link rel="stylesheet" href="polish.css?v=20260913-12">
+<link rel="stylesheet" href="appearance.css?v=20260913-12">
+<link rel="stylesheet" href="realism.css?v=20260913-12">
 </head>
 <body>
 <a class="skip-link" href="#main">Přeskočit na obsah</a>
@@ -174,18 +174,19 @@ select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(v
 <dialog id="readerDialog" aria-labelledby="dialogTitle"></dialog>
 <div id="toastHost" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=20260913-11"></script>
-<script src="book-core.js?v=20260913-11"></script>
-<script src="catalogue-data.js?v=20260913-11"></script>
-<script src="catalogue-cs.js?v=20260913-11"></script>
-<script src="goodreads-catalogue.js?v=20260913-11"></script>
-<script src="goodreads-client.js?v=20260913-11"></script>
-<script src="catalogue-client.js?v=20260913-11"></script>
-<script src="qrcodegen.js?v=20260913-11"></script>
-<script src="library-tools.js?v=20260913-11"></script>
-<script src="bookshelf.js?v=20260913-11"></script>
-<script src="appearance.js?v=20260913-11"></script>
-<script src="realism-scene.js?v=20260913-11"></script>
+<script src="config.js?v=20260913-12"></script>
+<script src="book-core.js?v=20260913-12"></script>
+<script src="recommendations.js?v=20260913-12"></script>
+<script src="catalogue-data.js?v=20260913-12"></script>
+<script src="catalogue-cs.js?v=20260913-12"></script>
+<script src="goodreads-catalogue.js?v=20260913-12"></script>
+<script src="goodreads-client.js?v=20260913-12"></script>
+<script src="catalogue-client.js?v=20260913-12"></script>
+<script src="qrcodegen.js?v=20260913-12"></script>
+<script src="library-tools.js?v=20260913-12"></script>
+<script src="bookshelf.js?v=20260913-12"></script>
+<script src="appearance.js?v=20260913-12"></script>
+<script src="realism-scene.js?v=20260913-12"></script>
 <script>
 var Core = window.BookCore;
 (function(){
@@ -267,6 +268,7 @@ var state = {
   results:[], rawResults:[], shown:24, searchLoading:false, offlineSearch:false,
   filters:{year:'all',language:'all',sort:'smart'}, discovery:'modern', storageError:'', returnView:'home',
   featured:[], featuredLoading:true, offlineFeatured:false,
+  roomPool:[], roomBooks:[], roomHistory:[], roomProfileKey:'',
   lib:{}, toast:null, _focusHeader:false, _fromHero:false
 };
 var toastTimer=null, searchTimer=null, searchSeq=0, detailSeq=0;
@@ -288,7 +290,7 @@ function exportLibrary(raw){
   a.href=url; a.download=raw?'zaobalkou-puvodni-data.json':'zaobalkou-knihovna.json'; a.click(); setTimeout(function(){URL.revokeObjectURL(url);},1000);
 }
 /* Catalogue adapters keep source failures, works and language editions separate. */
-var Client=window.CatalogueClient, LibraryTools=window.LibraryTools, BookShelf=window.BookShelf;
+var Client=window.CatalogueClient, LibraryTools=window.LibraryTools, BookShelf=window.BookShelf, RoomPicks=window.RoomRecommendations;
 var SEEDS=(window.CatalogueData||{}).books||[];
 EMBEDDED=Core.merge([SEEDS,Core.linkCatalogue(EMBEDDED.filter(function(b){return !SEEDS.some(function(seed){return Core.sameWork(b,seed);});}).map(function(b){return Object.assign({},b,{year:null,pages:0,yearKind:'original',source:'Redakční tip'});}),SEEDS)]).map(function(b){b.tags=Core.normalizeTags(b);return b;});
 function searchBooks(q){return Client.search(q,state.filters);}
@@ -320,16 +322,46 @@ function refreshFeatured(force){
   var seq=++featuredSeq;state.featured=featuredBooks([]);state.featuredLoading=true;renderMain();
   loadFeatured(state.discovery,force).then(function(r){
     if(seq!==featuredSeq)return;
+    addRoomPool(r.books);
     state.featured=featuredBooks(r.books);state.offlineFeatured=r.total>0&&r.failed===r.total;state.featuredIssues=r.issues||[];state.featuredLoading=false;
     if(state.view==='home')renderMain();
   }).catch(function(){if(seq!==featuredSeq)return;state.featured=featuredBooks([]);state.offlineFeatured=true;state.featuredLoading=false;if(state.view==='home')renderMain();});
+}
+
+// Keep the reception's full catalogue separate from the ordinary 18-card selection.
+var roomGeneration=0,roomWarmKey='';
+function addRoomPool(books){state.roomPool=Core.merge([books||[],state.roomPool]).slice(0,1200);}
+function roomProfile(){
+  var profile=RoomPicks.profile(Object.keys(state.lib).map(function(id){return state.lib[id].book;}));
+  var key=state.discovery+'|'+profile.key;
+  if(key!==state.roomProfileKey){
+    state.roomProfileKey=key;state.roomBooks=[];state.roomHistory=[];roomWarmKey='';roomGeneration++;
+  }
+  return profile;
+}
+function chooseRoomBooks(profile){
+  var pool=Core.merge([state.roomPool,state.rawResults,state.featured,EMBEDDED]);
+  state.roomBooks=RoomPicks.pick(pool,{profile:profile,mode:state.discovery,previous:state.roomBooks,history:state.roomHistory,count:6});
+  state.roomHistory=state.roomHistory.filter(function(b){return !state.roomBooks.some(function(next){return Core.sameWork(b,next);});}).concat(state.roomBooks).slice(-60);
+}
+function warmRoomPool(profile){
+  if(roomWarmKey===state.roomProfileKey)return;
+  roomWarmKey=state.roomProfileKey;
+  var generation=roomGeneration,filters={language:'all',year:'all',sort:'newest'};
+  var jobs=profile.topics.slice(0,2).map(function(tag){return function(){return Client.tags([tag],filters);};});
+  if(profile.authors.length)jobs.push(function(){return Client.search(profile.authors[0],filters);});
+  // One bounded batch per taste profile. Clicking Next never clears API caches.
+  jobs.reduce(function(chain,job){return chain.then(function(){
+    if(generation!==roomGeneration)return;
+    return job().then(function(result){if(generation===roomGeneration)addRoomPool(result.books);}).catch(function(){});
+  });},Promise.resolve());
 }
 
 /* ============ knihovna ============ */
 function snapshot(b){return Core.snapshot(b);}
 function findBook(id){
   if(state.detail && state.detail.id===id) return state.detail;
-  var all=state.results.concat(state.rawResults,state.featured,(state.detail&&state.detail.editions)||[]);
+  var all=state.roomBooks.concat(state.results,state.rawResults,state.featured,state.roomPool,(state.detail&&state.detail.editions)||[]);
   all=all.concat(all.flatMap(function(b){return b.editions||[];}));
   for(var i=0;i<all.length;i++){ if(all[i].id===id) return all[i]; }
   for(var j=0;j<EMBEDDED.length;j++){ if(EMBEDDED[j].id===id) return EMBEDDED[j]; }
@@ -518,7 +550,7 @@ function observeRatingCards(){
         }
         if(b.editions)b=Object.assign({},b,{editions:b.editions.map(update)});return b;
       }
-      state.results=state.results.map(update);state.rawResults=state.rawResults.map(update);state.featured=state.featured.map(update);
+      state.results=state.results.map(update);state.rawResults=state.rawResults.map(update);state.featured=state.featured.map(update);state.roomBooks=state.roomBooks.map(update);
       document.querySelectorAll('[data-rating-id="'+CSS.escape(id)+'"]').forEach(function(target){target.innerHTML=ratingContent(rated);});
     }).catch(function(){});
   });},{rootMargin:'100px'});
@@ -559,11 +591,10 @@ function backupHTML(){return '<div class="toolbar"><button class="tag-chip" data
 function sourceStatus(issues){return issues&&issues.length?'<details class="source-status"><summary>Dostupnost katalogů</summary><p>'+issues.map(function(i){return esc(i.source+': '+i.message);}).join('<br>')+'</p></details>':'';}
 
 function isRealism(){return !!(window.Appearance&&window.Appearance.get().realism);}
-var roomPage=0;
 function roomHomeHTML(){
-  var books=state.featured.length?state.featured:featuredBooks([]),pages=Math.max(1,Math.ceil(books.length/6));
-  roomPage=roomPage%pages;
-  var recommendations=books.slice(roomPage*6,roomPage*6+6).map(function(b){
+  var profile=roomProfile();
+  if(!state.roomBooks.length)chooseRoomBooks(profile);
+  var recommendations=state.roomBooks.map(function(b){
     return '<button type="button" class="room-book" data-action="open" data-id="'+attr(b.id)+'" aria-label="'+attr('Otevřít knihu: '+b.title)+'">'
       +coverHTML(b,{})+'<span class="room-book-label">'+esc(b.title)+'<small>'+esc(b.author)+'</small></span></button>';
   }).join('');
@@ -572,7 +603,7 @@ function roomHomeHTML(){
     +'<section class="room-reception"><h1>Jaký příběh<br>si dnes otevřeš?</h1>'
     +'<div class="hsearch-wrap"><input id="herosearch" type="search" maxlength="200" autocomplete="off" aria-label="Najdi knihu" placeholder="Název, autor nebo #štítek" value="'+attr(state.searchInput||'')+'"><button type="button" data-action="roomSubmit" aria-label="Hledat knihu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg></button></div>'
     +'<div class="room-moods">'+['fantasy','romantika','sci-fi'].map(function(tag){return '<button data-action="tag-raw" data-term="'+tag+'" data-label="#'+tag+'">'+tag+'</button>';}).join('')+'</div></section>'
-    +'<button type="button" class="room-next" data-action="roomNext"'+(pages<2?' disabled':'')+'>Další příběhy <span aria-hidden="true">→</span></button>'
+    +'<button type="button" class="room-next" data-action="roomNext" title="Nová náhodná šestice podle tvé knihovny">Další příběhy <span aria-hidden="true">→</span></button>'
     +'<details class="room-directory"><summary>Listovat katalogem</summary><div>'+discoveryHTML()+'<div class="room-directory-moods">'+MOODS.map(function(m,i){return '<button class="tag-chip" data-action="mood" data-mood="'+i+'">'+esc(m.label)+'</button>';}).join('')+'</div>'
     +(shelf('reading').length?'<button class="tag-chip" data-action="library">Pokračovat ve čtení</button>':'')+'</div></details>'
     +'</section></div>';
@@ -935,6 +966,7 @@ function syncAppearanceScene(){
     }else if(picker&&el('appearanceHome'))el('appearanceHome').appendChild(picker);
   }
   if(window.RealismScene)window.RealismScene.sync({view:state.view,appearance:appearance});
+  if(appearance.realism&&state.view==='home')warmRoomPool(roomProfile());
 }
 function updateBadge(){ var c=Object.keys(state.lib).length; el('libBadge').innerHTML = c>0 ? '<span class="badge">'+c+'</span>' : ''; }
 function renderToast(){
@@ -951,7 +983,7 @@ document.addEventListener('click',function(e){
   if(a==='home') goHome();
   else if(a==='roomSearch'){goHome();if(el('herosearch'))el('herosearch').focus();}
   else if(a==='roomSubmit'){clearTimeout(searchTimer);state._fromHero=true;applyQuery();}
-  else if(a==='roomNext'){roomPage++;renderMain();}
+  else if(a==='roomNext'){chooseRoomBooks(roomProfile());renderMain();}
   else if(a==='back'){setRoute(state.returnView==='library'?'#shelf':'');detailSeq++;state.view=state.returnView==='library'?'library':(state.activeTags.length||state.query?'search':'home');if(state.view==='search')runSearch();else renderMain();}
   else if(a==='library') goLibrary();
   else if(a==='libraryView'){state.libraryView=t.getAttribute('data-mode')==='overview'?'overview':'shelf';renderMain();}
