@@ -82,7 +82,7 @@
       if(room){var old=room;room=null;old.canvas.removeEventListener('webglcontextlost',contextLost);old.canvas.removeEventListener('webglcontextrestored',contextRestored);try{old.dispose();}catch(error){if(o.onError)o.onError(error);}finally{if(old.canvas.parentNode)old.canvas.remove();}}
       if(host)delete host.dataset.ready;
     }
-    function fallback(error){release();failed=true;if(host){host.dataset.fallback='1';delete host.dataset.ready;}if(o.onError)o.onError(error);}
+    function fallback(error){release();failed=true;if(host){host.dataset.fallback='1';host.dataset.error=String(error&&error.message||'Graphics unavailable').slice(0,240);delete host.dataset.ready;}if(o.onError)o.onError(error);}
     function start(ticket){
       if(!engine||ticket!==serial||!current.realism||!mount())return;
       try{
