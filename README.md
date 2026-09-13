@@ -9,7 +9,7 @@
 - **Počty stran** se doplňují přes ISBN / identifikátor vydání z Open Library, případně Google Books, a z ověřených nakladatelských metadat. Medián napříč vydáními se nevydává za počet stran konkrétní knihy. Neznámý počet lze doplnit ručně; pokrok funguje i bez něj. Ruční údaje mají přednost.
 - **Štítky pro brouzdání** používají společný český slovník: romantika, hokej, království, magie, drak a další. Vznikají z předmětových hesel, výslovných témat anotace a doložených redakčních údajů. Dlouhé variace taxonomie YA nezaplňují tlačítka. Kombinace vyžaduje všechna zvolená témata.
 - **Výpadky katalogů** jsou oddělené od prázdných výsledků. Volitelný Google Books se bez klíče vůbec nevolá. Dostupnost zdrojů je v rozbalovacím detailu; úplný výpadek je zřetelně oznámen. Limity, cache, sdílení souběžných požadavků a časové limity tlumí opakované chyby. Uložené a redakční knihy se zobrazí hned.
-- **Knihovna s tebou:** lokálně vytvořený komprimovaný odkaz a QR kód přenesou současný snímek knihovny včetně pokroku a jazykových verzí. Otevření odkazu samo knihovnu nepřepíše; uživatel potvrdí přidání a zvolí, který pokrok zachovat. Není to průběžná synchronizace. Pro velkou knihovnu se nabídne odkaz bez QR, případně soubor. QR se generuje místně bez služby třetí strany.
+- **Knihovna s tebou:** lokálně vytvořený komprimovaný odkaz a QR kód přenesou současný snímek knihovny včetně pokroku a jazykových verzí. Otevření odkazu samo knihovnu nepřepíše; uživatel potvrdí přidání a zvolí, který pokrok zachovat. Není to průběžná synchronizace. Pro velkou knihovnu se nabídne odkaz bez QR, při překročení limitu odkazu je třeba přenést menší výběr. QR se generuje místně bez služby třetí strany.
 - **Excel:** skutečný `.xlsx` se čtyřmi sloupci Název knihy, Autor, Rok vydání, Série a díl. Názvy mají nativní hypertextový odkaz na detail knihy na webu. První řádek je ukotvený a tabulku lze filtrovat. Prázdná série znamená chybějící údaj, nikoli hádané pořadí.
 - **Pět pastelových motivů:** broskev, levandule, šalvěj, růže a modrá. Ukládají se do prohlížeče a fungují se světlým i tmavým režimem. Promění ikony, odznaky, odkazy, pozadí i náhradní obálky.
 
@@ -30,34 +30,13 @@ Veřejné katalogy nemají všechny české překlady, vydání ani počty stran
 
 ## Soubory a nasazení
 
-Nahraj všechny kořenové HTML, JS a CSS soubory do kořene `main`, testy do `tests/`. `index.html` potřebuje `book-core.js`, `catalogue-client.js`, `catalogue-data.js`, `config.js`, `library-tools.js`, `qrcodegen.js`, `theme-palette.js`, `theme-palette.css` a `reader-tools.css`. `qrcodegen.js` pochází z projektu Nayuki, licence MIT je zachovaná v souboru. Staré HTML vstupy přesměrovávají na index.
+Nahraj všechny kořenové HTML, JS a CSS soubory do kořene `main`, testy do `tests/`. `index.html` potřebuje `book-core.js`, `catalogue-client.js`, `catalogue-data.js`, `config.js`, `library-tools.js`, `qrcodegen.js`, `theme-palette.js`, `theme-palette.css` `reader-tools.css`, `bookshelf.js` a `bookshelf.css`. `qrcodegen.js` pochází z projektu Nayuki, licence MIT je zachovaná v souboru. Staré HTML vstupy přesměrovávají na index.
 
 Lokální spuštění: `python3 -m http.server 8765`. Testy: `node --test tests/*.test.cjs` (Node20+; test čtení XLSX používá také Python/openpyxl). Testy zahrnují skutečné OOXML odkazy, kompresi a validaci přenosu, edice/jazyky/roky, výpadky, štítky, souběh a ukládání pokroku. Regresní testy používají odpovědi katalogů a malý DOM adaptér, proto je doplňuje kontrola živého webu v prohlížeči.
 
-## Přenos knihovny z MeziŘádky
 
-**Nová doména nesdílí localStorage s původní.** Knihovna z `https://meziradky.github.io/` se na `https://zaobalkou.github.io/` sama neobjeví. Přenos nevyžaduje přihlášení k původnímu GitHub účtu; potřebuje pouze původní prohlížeč a jeho dosud uložená data.
+## Poličky a hledání podle štítků
 
-1. Otevři **https://meziradky.github.io/** v tom zařízení, prohlížeči a profilu, kde máš knihy. Pokud má původní verze v Knihovně tlačítko **Stáhnout zálohu**, stáhni zálohu jím.
-2. Původní nasazená verze z června 2026 tlačítko export nemá. Na počítači otevři vývojářskou konzoli původní stránky a spusť následující kód. Jen přečte knihovnu a stáhne JSON; nic nemaže, nepřepisuje ani nikam neposílá:
+Knihovna má výchozí pohled s hřbety. Přebal a tlačítko detailu se zobrazí při najetí, zaostření klávesnicí nebo klepnutí. Přepínač „Přehled a pokrok“ zachovává přímé ovládání rozečtených knih. Běžný import/export JSON byl odstraněn; přenos odkazem/QR a Excel zůstávají. Nouzový export původních dat se nabídne jen při chybě úložiště.
 
-```js
-(() => {
-  const raw = localStorage.getItem('mzr_lib_v2');
-  if (!raw) throw new Error('V tomto prohlížeči není uložená knihovna MeziŘádky.');
-  JSON.parse(raw);
-  const url = URL.createObjectURL(new Blob([raw], {type: 'application/json'}));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'meziradky-knihovna.json';
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-})();
-```
-
-3. Na **https://zaobalkou.github.io/** otevři **Knihovna → Další možnosti uložení → Načíst soubor** a vyber stažený JSON. Zkontroluj počet knih, jejich stav a čtenářský pokrok. Import přidává chybějící knihy a zachovává pokrok již uložených knih.
-4. Než bude přenos ověřený, nemaž data původní stránky. Pokud je knihovna uložená jen v Safari na iPhonu, je třeba export provést v tomto Safari (např. přes vzdálený Web Inspector z připojeného Macu); otevření webu v Safari na Macu samo data z iPhonu nepřenese.
-5. Z nové stránky lze zálohu stáhnout přes **Stáhnout zálohu** jako `zaobalkou-knihovna.json` a přenášet ji na další zařízení.
-
-Úložiště nadále používá `mzr_lib_v2`, struktura knih zůstala zachovaná a zálohy mají původní identifikátor `format: "meziradky"`, `version: 1`. Nový název souboru nemění kompatibilitu; import přijímá i původní neobalený objekt knihovny. Také ostatní interní názvy `mzr_*` a `MZR_CONFIG` zůstávají pro kompatibilitu.
-
+V horním vyhledávání funguje `#young adult` i `#youngadult`. Každé další `#` zahajuje další štítek a všechny se kombinují podmínkou zároveň: `#young adult #fantasy`. `#young #adult` jsou dva neznámé štítky; stránka na ně upozorní. Text před prvním štítkem zúží autora nebo název, např. `Sarah J. Maas #romantasy`.

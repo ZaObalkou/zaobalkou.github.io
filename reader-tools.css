@@ -6,7 +6,7 @@
 .edition-picker{margin:18px 0 22px;padding:16px;border:1px solid rgba(var(--accent-rgb),.25);border-radius:12px;background:var(--card)}
 .edition-picker label{display:block;font-size:15px;margin-bottom:8px;color:var(--accent)}
 .edition-picker .book-meta{margin:8px 0 0}
-.source-status,.backup-tools{color:var(--muted);font-size:14px;margin:14px 0 26px}
+.source-status{color:var(--muted);font-size:14px;margin:14px 0 26px}
 summary{cursor:pointer;width:fit-content;padding:6px 0}
 button:disabled{opacity:.55;cursor:default;transform:none!important}
 #readerDialog{background:var(--card);color:var(--ink);border:1px solid rgba(var(--ink-rgb),.2);border-radius:18px;width:min(560px,calc(100vw - 28px));padding:26px;max-height:90dvh;overflow:auto;box-shadow:0 24px 80px rgba(0,0,0,.25)}
@@ -18,3 +18,7 @@ button:disabled{opacity:.55;cursor:default;transform:none!important}
 .transfer-qr{max-width:240px;margin:22px auto;padding:10px;background:#fff;border-radius:10px}
 .transfer-qr svg{display:block;width:100%;height:auto}
 .transfer-preview{max-height:180px;overflow:auto;padding-left:22px;font-size:16px}
+
+.shelf-section{margin:32px 0 42px}
+.shelf-section h2{font:500 25px/1.2 'Newsreader',Georgia,serif;margin:0 0 12px}
+.shelf-section h2 span{font:15px 'Newsreader',Georgia,serif;color:var(--faint);margin-left:8px}

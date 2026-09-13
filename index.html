@@ -42,6 +42,7 @@ input[type=range]::-moz-range-thumb{width:19px;height:19px;border-radius:50%;bac
 .logo:hover .t em{color:var(--ink)}
 .hsearch-wrap{flex:1;min-width:200px;max-width:440px;display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid rgba(var(--ink-rgb),.2);border-radius:999px;padding:8px 16px;transition:border-color .25s,box-shadow .25s}
 .hsearch-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.1)}
+.hsearch-wrap input:focus-visible{outline:none}
 .hsearch-wrap input{flex:1;border:none;background:none;outline:none;font-size:16px;color:var(--ink);min-width:0}
 nav{display:flex;align-items:center;gap:6px}
 .nav-btn{background:none;border:none;cursor:pointer;font-family:'EB Garamond',serif;font-size:16.5px;color:var(--muted);padding:8px 12px;border-radius:8px;transition:color .2s,background .2s}
@@ -136,8 +137,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,la
 @media(max-width:420px){.hdr-in nav>.nav-btn[data-action="home"]{display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
-<link rel="stylesheet" href="theme-palette.css?v=20260912-4">
-<link rel="stylesheet" href="reader-tools.css?v=20260912-4">
+<link rel="stylesheet" href="theme-palette.css?v=20260913-1">
+<link rel="stylesheet" href="reader-tools.css?v=20260913-1">
+<link rel="stylesheet" href="bookshelf.css?v=20260913-1">
 </head>
 <body>
 <a class="skip-link" href="#main">Přeskočit na obsah</a>
@@ -167,13 +169,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,la
 <dialog id="readerDialog" aria-labelledby="dialogTitle"></dialog>
 <div id="toastHost" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=20260912-4"></script>
-<script src="book-core.js?v=20260912-4"></script>
-<script src="catalogue-data.js?v=20260912-4"></script>
-<script src="catalogue-client.js?v=20260912-4"></script>
-<script src="qrcodegen.js?v=20260912-4"></script>
-<script src="library-tools.js?v=20260912-4"></script>
-<script src="theme-palette.js?v=20260912-4"></script>
+<script src="config.js?v=20260913-1"></script>
+<script src="book-core.js?v=20260913-1"></script>
+<script src="catalogue-data.js?v=20260913-1"></script>
+<script src="catalogue-client.js?v=20260913-1"></script>
+<script src="qrcodegen.js?v=20260913-1"></script>
+<script src="library-tools.js?v=20260913-1"></script>
+<script src="bookshelf.js?v=20260913-1"></script>
+<script src="theme-palette.js?v=20260913-1"></script>
 <script>
 var Core = window.BookCore;
 (function(){
@@ -253,7 +256,7 @@ EMBEDDED = MODERN.concat(EMBEDDED).map(function(b){return Object.assign({pages:0
 
 /* ============ stav ============ */
 var state = {
-  view:'home', query:'', activeTags:[],
+  view:'home', query:'', searchInput:'', activeTags:[], unknownTags:[], libraryView:'shelf',
   selectedId:null, detail:null, detailLoading:false,
   results:[], rawResults:[], shown:24, searchLoading:false, offlineSearch:false, searchFailed:0, searchTotal:0,
   filters:{year:'all',language:'all',sort:'smart'}, discovery:'modern', featuredFailed:0, storageError:'', returnView:'home',
@@ -279,7 +282,7 @@ function loadLib(){
   catch(e){ state.lib=Object.create(null); state.storageError='Knihovnu nelze načíst. Původní data zůstala zachována; nejdřív si stáhni jejich zálohu.'; state.storageBlocked=true; }
 }
 function saveLib(){
-  if(state.storageBlocked){ state.storageError='Původní knihovna je poškozená. Stáhni původní data a obnov platnou zálohu.'; return false; }
+  if(state.storageBlocked){ state.storageError='Původní knihovna je poškozená. Stáhni původní data pro jejich obnovu.'; return false; }
   try { localStorage.setItem('mzr_lib_v2', JSON.stringify(state.lib)); state.storageError=''; return true; }
   catch(e){ state.storageError='Změny se nepodařilo uložit. Zálohuj knihovnu před zavřením stránky.'; return false; }
 }
@@ -289,29 +292,8 @@ function exportLibrary(raw){
   var blob=new Blob([value || '{}'],{type:'application/json'}), url=URL.createObjectURL(blob), a=document.createElement('a');
   a.href=url; a.download=raw?'zaobalkou-puvodni-data.json':'zaobalkou-knihovna.json'; a.click(); setTimeout(function(){URL.revokeObjectURL(url);},1000);
 }
-function importLibrary(file){
-  if(!file) return;
-  if(file.size>5000000){flash('Záloha je příliš velká (maximum 5 MB).'); return;}
-  file.text().then(function(text){
-    var raw=JSON.parse(text);
-    if(raw.format && (raw.format!=='meziradky' || raw.version!==1)) throw new Error('Nepodporovaná verze zálohy.');
-    var incoming=Core.validateLibrary(raw.library || raw), merged=Object.assign(Object.create(null),state.lib);
-    Object.keys(incoming).forEach(function(id){
-      // Existing progress wins. Import only missing books, including alternate source IDs.
-      if(!Object.keys(merged).some(function(k){return k===id || Core.sameBook(merged[k].book,incoming[id].book);})) merged[id]=incoming[id];
-    });
-    merged=Core.validateLibrary(merged);
-    if(state.storageBlocked){
-      // Preserve corrupt original bytes before a successful recovery can replace them.
-      localStorage.setItem('mzr_lib_recovery_'+Date.now(),localStorage.getItem('mzr_lib_v2') || '');
-    }
-    localStorage.setItem('mzr_lib_v2',JSON.stringify(merged));
-    state.lib=merged; state.storageBlocked=false; state.storageError=''; updateBadge(); renderMain(); flash('Záloha načtena. Stávající pokrok zůstal zachován.');
-  }).catch(function(e){flash('Import se nezdařil: '+e.message);});
-}
-
 /* Catalogue adapters keep source failures, works and language editions separate. */
-var Client=window.CatalogueClient, LibraryTools=window.LibraryTools;
+var Client=window.CatalogueClient, LibraryTools=window.LibraryTools, BookShelf=window.BookShelf;
 var SEEDS=(window.CatalogueData||{}).books||[];
 EMBEDDED=Core.merge([SEEDS,Core.linkCatalogue(EMBEDDED.filter(function(b){return !SEEDS.some(function(seed){return Core.sameWork(b,seed);});}).map(function(b){return Object.assign({},b,{year:null,pages:0,yearKind:'original',source:'Redakční tip'});}),SEEDS)]).map(function(b){b.tags=Core.normalizeTags(b);return b;});
 function searchBooks(q){return Client.search(q,state.filters);}
@@ -320,7 +302,7 @@ function loadFeatured(mode,force){return Client.featured(mode,{force:!!force});}
 function matchesTags(b,terms){return Core.matchesTags(b,terms);}
 function localSearch(query,tags){
   var books=Core.merge([Object.keys(state.lib).map(function(id){return state.lib[id].book;}),EMBEDDED]);
-  return books.filter(function(b){return tags&&tags.length?matchesTags(b,tags):Core.relevance(b,query)>0;});
+  return books.filter(function(b){return (!tags||!tags.length||matchesTags(b,tags))&&(!query||Core.relevance(b,query)>0);});
 }
 function buildRatings(b){
   var primary=Core.rating(b);
@@ -412,7 +394,7 @@ function flash(msg){ state.toast=msg; renderToast(); clearTimeout(toastTimer); t
 
 /* ============ navigace + hledání ============ */
 function cancelSearch(){clearTimeout(searchTimer);searchSeq++;state.searchLoading=false;}
-function goHome(){setRoute(''); cancelSearch();detailSeq++; state.featured=featuredBooks(state.featured); state.view='home'; state.activeTags=[]; state.query=''; if(el('hsearch'))el('hsearch').value=''; renderMain(); window.scrollTo(0,0); }
+function goHome(){setRoute(''); cancelSearch();detailSeq++; state.featured=featuredBooks(state.featured); state.view='home'; state.activeTags=[]; state.unknownTags=[]; state.searchInput=''; state.query=''; if(el('hsearch'))el('hsearch').value=''; renderMain(); window.scrollTo(0,0); }
 function goLibrary(){setRoute('#shelf');cancelSearch();detailSeq++; state.view='library'; renderMain(); window.scrollTo(0,0); }
 function openBook(id,fromRoute){
   var base=findBook(id);if(!base)return;
@@ -434,13 +416,14 @@ function applyFilters(){
 }
 function runSearch(){
   var q=state.query.trim(), tags=state.activeTags.map(function(t){return t.term;});
+  if(state.unknownTags.length){cancelSearch();state.results=[];state.rawResults=[];state.searchIssues=[];renderMain();return;}
   if(!q&&!tags.length){cancelSearch();state.results=[];state.rawResults=[];renderMain();return;}
   var seq=++searchSeq;state.shown=24;state.searchLoading=true;state.offlineSearch=false;state.rawResults=[];state.results=[];renderMain();
   state.rawResults=localSearch(q,tags);state.results=Core.groupWorks(state.rawResults,Object.assign({query:q},state.filters));renderMain();
   var p=tags.length?searchCombo(tags):searchBooks(q);
   p.then(function(r){
     if(seq!==searchSeq||state.view!=='search')return;
-    state.rawResults=Core.merge([r.books,localSearch(q,tags)]);
+    state.rawResults=Core.merge([r.books,localSearch(q,tags)]).filter(function(b){return (!q||Core.relevance(b,q)>0)&&(!tags.length||matchesTags(b,tags));});
     state.searchFailed=r.failed;state.searchTotal=r.total;state.searchIssues=r.issues||[];state.offlineSearch=r.total>0&&r.failed===r.total;state.searchLoading=false;applyFilters();
   }).catch(function(){
     if(seq!==searchSeq||state.view!=='search')return;
@@ -449,22 +432,24 @@ function runSearch(){
 }
 
 function applyQuery(){
-  var has=!!state.query.trim();
-  if(has){ setRoute(''); state.activeTags=[]; state.view='search'; }
-  else if(state.view==='search' && !state.activeTags.length){ state.view='home'; }
-  if(state._fromHero){ var hs=el('hsearch'); if(hs) hs.value=state.query; state._focusHeader=true; state._fromHero=false; }
-  if(has){ runSearch(); } else { renderMain(); }
+  var raw=state.searchInput, parsed=Core.parseSearchInput(raw);
+  state.query=parsed.query;state.activeTags=parsed.tags.map(function(tag){return {term:tag,label:'#'+tag,cz:tag};});state.unknownTags=parsed.unknownTags;
+  var has=!!raw.trim();
+  if(has){setRoute('');state.view='search';}
+  else if(state.view==='search'){state.view='home';}
+  if(state._fromHero){var hs=el('hsearch');if(hs)hs.value=raw;state._focusHeader=true;state._fromHero=false;}
+  if(has)runSearch();else renderMain();
 }
-function onQuery(val){searchSeq++;state.query=String(val).slice(0,200); clearTimeout(searchTimer); searchTimer=setTimeout(applyQuery,350); }
+function onQuery(val){searchSeq++;state.searchInput=String(val).slice(0,200);state.query=Core.parseSearchInput(state.searchInput).query;clearTimeout(searchTimer);searchTimer=setTimeout(applyQuery,350);}
 function addTag(term,label,cz){setRoute('');cancelSearch();detailSeq++;
-  for(var i=0;i<state.activeTags.length;i++){ if(state.activeTags[i].term===term){ return; } }
-  state.activeTags.push({term:term,label:label,cz:cz||term}); state.query=''; if(el('hsearch'))el('hsearch').value='';
+  for(var i=0;i<state.activeTags.length;i++){ if(Core.norm(state.activeTags[i].cz)===Core.norm(cz||term)||state.activeTags[i].term===term){ return; } }
+  state.activeTags.push({term:term,label:label,cz:cz||term}); state.query=''; state.searchInput=''; state.unknownTags=[]; if(el('hsearch'))el('hsearch').value='';
   state.view='search'; window.scrollTo(0,0); runSearch();
 }
 function searchTag(mood){ addTag(mood.en, mood.label, mood.cz); }
 function searchRaw(term,label){ addTag(term, label, term); }
-function removeTag(i){ state.activeTags.splice(i,1); if(state.activeTags.length){ runSearch(); } else { clearTag(); } }
-function clearTag(){cancelSearch();detailSeq++; state.activeTags=[]; state.results=[];state.rawResults=[]; state.query=''; if(el('hsearch'))el('hsearch').value=''; state.view='home'; renderMain(); }
+function removeTag(i){ state.activeTags.splice(i,1);state.searchInput=state.query+(state.query?' ':'')+state.activeTags.map(function(t){return t.label;}).join(' ');if(el('hsearch'))el('hsearch').value=state.searchInput; if(state.activeTags.length){ runSearch(); } else { clearTag(); } }
+function clearTag(){cancelSearch();detailSeq++; state.activeTags=[]; state.results=[];state.rawResults=[]; state.query=''; state.searchInput=''; state.unknownTags=[]; if(el('hsearch'))el('hsearch').value=''; state.view='home'; renderMain(); }
 function loadMore(){state.shown=Math.min(state.results.length,state.shown+24);renderMain();}
 
 /* ============ render: komponenty ============ */
@@ -527,7 +512,7 @@ function filterHTML(){
   var years=[['all','Všechny roky']];for(var y=new Date().getFullYear();y>=1450;y--)years.push([String(y),String(y)]);
   return '<div class="toolbar filters">'+select('sort','Řazení',[['smart','Nejlepší shoda · současné výš'],['newest','Od nejnovějších'],['rating','Podle hodnocení']])+select('year','Rok vydání',years)+select('language','Jazyk knížky',[['all','Všechny jazyky'],['cs','Čeština'],['en','Angličtina'],['sk','Slovenština'],['de','Němčina'],['fr','Francouzština'],['es','Španělština'],['it','Italština'],['pl','Polština']])+'</div><p class="book-meta">Filtry platí pro konkrétní vydání. Jeden příběh má jednu kartu; jazykovou verzi vybereš v detailu.</p>';
 }
-function backupHTML(){return '<div class="toolbar"><button class="tag-chip" data-action="transfer">Přenést knihovnu · odkaz / QR</button><button class="tag-chip" data-action="excel"'+(!Object.keys(state.lib).length?' disabled':'')+'>Stáhnout tabulku Excel</button></div><p class="book-meta">Tvoje čtení se ukládá v tomto prohlížeči. Odkaz přenese aktuální knihovnu do dalšího zařízení.</p><details class="backup-tools"><summary>Další možnosti uložení</summary><div class="toolbar"><button class="tag-chip" data-action="export">Stáhnout zálohu</button><label class="tag-chip">Načíst soubor<input id="backupImport" type="file" accept=".json,application/json" class="file-input"></label></div></details>';}
+function backupHTML(){return '<div class="toolbar"><button class="tag-chip" data-action="transfer">Přenést knihovnu · odkaz / QR</button><button class="tag-chip" data-action="excel"'+(!Object.keys(state.lib).length?' disabled':'')+'>Stáhnout tabulku Excel</button></div><p class="book-meta">Tvoje čtení se ukládá v tomto prohlížeči. Odkaz přenese aktuální knihovnu do dalšího zařízení.</p>';}
 function sourceStatus(issues){return issues&&issues.length?'<details class="source-status"><summary>Dostupnost katalogů</summary><p>'+issues.map(function(i){return esc(i.source+': '+i.message);}).join('<br>')+'</p></details>':'';}
 
 function homeHTML(){
@@ -590,13 +575,15 @@ function searchHTML(){
     +'<h1 style="font-family:\'Newsreader\',serif;font-weight:400;font-size:clamp(30px,4vw,42px);margin:0 0 14px">Výsledky</h1>';
   if(state.activeTags.length){
     var chips=state.activeTags.map(function(t,i){return '<button class="tag-active" data-action="removeTag" data-i="'+i+'">'+esc(t.label)+'<span style="display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.22);font-size:13px">×</span></button>';}).join(' <span style="color:var(--faint2);font-size:14px">a&nbsp;zároveň</span> ');
-    var addable=MOODS.map(function(m,i){ for(var x=0;x<state.activeTags.length;x++){if(state.activeTags[x].term===m.en)return '';} return '<button class="tag-chip" data-action="mood" data-mood="'+i+'">+ '+esc(m.label)+'</button>'; }).join('');
+    var addable=MOODS.map(function(m,i){ for(var x=0;x<state.activeTags.length;x++){if(state.activeTags[x].term===m.en||Core.norm(state.activeTags[x].cz)===Core.norm(m.label.replace(/^#/,'')))return '';} return '<button class="tag-chip" data-action="mood" data-mood="'+i+'">+ '+esc(m.label)+'</button>'; }).join('');
     h+='<div style="display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:8px">'+chips
       +'<button data-action="clearTag" style="background:none;border:none;cursor:pointer;color:var(--faint2);font-size:14.5px;padding:6px 4px">vyčistit vše</button></div>'
       +'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px">'+addable+'</div>'
       +'<p style="color:var(--faint);font-size:14px;margin:0 0 20px;font-style:italic">Hledám knihy, které mají všechny zvolené nálady zároveň.</p>';
   }
   h+=filterHTML();
+  h+='<p class="book-meta">Víceslovný štítek: <strong>#young adult</strong> nebo <strong>#youngadult</strong>. Další štítek začíná dalším #, třeba #young adult #fantasy. Kniha musí odpovídat všem.</p>';
+  if(state.unknownTags.length){return h+'<div class="notice" role="status">Neznámé štítky: '+state.unknownTags.map(function(t){return '<strong>'+esc('#'+t)+'</strong>';}).join(', ')+'. Použij celý název štítku; například #young adult je jeden štítek.</div></div>';} 
   if(state.searchLoading){ h+='<p role="status">Doplňuji výsledky z katalogů…</p>'+(state.results.length?gridHTML(state.results):spinner())+'</div>'; return h; }
   var n=state.results.length;
   if(state.query)h+='<p>Hledáš: <strong>'+esc(state.query)+'</strong></p>';
@@ -714,6 +701,14 @@ function libraryHTML(){
       +'<button data-action="home" style="background:var(--accent);color:var(--onaccent);border:none;border-radius:10px;padding:12px 26px;font-size:17px;cursor:pointer">Objevovat knihy</button></div></div>';
     return h;
   }
+  h+='<div class="toolbar" aria-label="Zobrazení knihovny"><button class="tag-chip" data-action="libraryView" data-mode="shelf" aria-pressed="'+(state.libraryView==='shelf')+'">Poličky</button><button class="tag-chip" data-action="libraryView" data-mode="overview" aria-pressed="'+(state.libraryView==='overview')+'">Přehled a pokrok</button></div>';
+  if(state.libraryView==='shelf'){
+    h+='<p class="book-meta shelf-help">Najeď na hřbet nebo na něj klepni. Kniha se vysune a ukáže přebal; tlačítkem otevřeš detail a pokrok čtení.</p>';
+    [['Rozečtené',reading,'reading'],['Chci přečíst',want,'want'],['Přečtené',read,'read']].forEach(function(group){
+      if(group[1].length)h+='<section class="shelf-section"><h2>'+group[0]+' <span>'+group[1].length+'</span></h2>'+BookShelf.render(group[1],{esc:esc,attr:attr,coverHTML:coverHTML,status:group[2]})+'</section>';
+    });
+    return h+'</div>';
+  }
   if(reading.length){
     h+='<section style="margin-bottom:46px"><h2 style="font-family:\'Newsreader\',serif;font-weight:500;font-size:24px;margin:0 0 20px;display:flex;align-items:baseline;gap:11px">Rozečtené<span style="font-size:15px;color:var(--faint2)">'+reading.length+'</span></h2>'
       +'<div style="display:flex;flex-direction:column;gap:16px">'+reading.map(readingRowHTML).join('')+'</div></section>';
@@ -794,7 +789,7 @@ function showTransfer(){
   LibraryTools.transferLink(state.lib).then(function(r){
     if(seq!==dialogSeq||!el('readerDialog').open)return;
     dialogHTML('Knihovna s tebou','<p>Otevři odkaz na druhém zařízení nebo naskenuj QR kód. Přenese se <strong>'+r.count+' '+plkn(r.count)+'</strong> včetně pokroku a zvolených jazykových vydání.</p><p class="book-meta">Jde o aktuální snímek knihovny. Po dalším čtení vytvoř nový odkaz; změny se mezi zařízeními samy nesynchronizují.</p>'+(r.qrSvg?'<div class="transfer-qr" aria-label="QR kód pro přenos knihovny">'+r.qrSvg+'</div>':'<p class="book-meta">Knihovna je pro jeden QR kód příliš velká. Použij odkaz níže.</p>')+'<label for="transferUrl">Odkaz na tuto knihovnu</label><textarea id="transferUrl" readonly rows="3">'+esc(r.url)+'</textarea><div class="toolbar"><button class="tag-chip" data-action="copyTransfer">Kopírovat odkaz</button></div><p class="book-meta">Odkaz obsahuje tvoje knihy i pokrok. Sdílej ho jen s lidmi, kterým je chceš ukázat. Samotná knihovna se nikam neodesílá.</p>');
-  }).catch(function(e){if(seq!==dialogSeq||!el('readerDialog').open)return;dialogHTML('Přenos knihovny','<p>'+esc(e.message)+'</p><button class="tag-chip" data-action="export">Stáhnout knihovnu jako soubor</button>');});
+  }).catch(function(e){if(seq!==dialogSeq||!el('readerDialog').open)return;dialogHTML('Přenos knihovny','<p>'+esc(e.message)+'</p><p>Zkus vytvořit odkaz pro menší knihovnu.</p>');});
 }
 function previewTransfer(lib){
   dialogSeq++;
@@ -860,6 +855,12 @@ document.addEventListener('click',function(e){
   else if(a==='theme') toggleTheme();
   else if(a==='back'){setRoute(state.returnView==='library'?'#shelf':'');detailSeq++;state.view=state.returnView==='library'?'library':(state.activeTags.length||state.query?'search':'home');if(state.view==='search'&&!state.rawResults.length)runSearch();else renderMain();}
   else if(a==='library') goLibrary();
+  else if(a==='libraryView'){state.libraryView=t.getAttribute('data-mode')==='overview'?'overview':'shelf';renderMain();}
+  else if(a==='shelf-preview'){
+    var item=t.closest('.shelf-book'), opening=!item.classList.contains('is-open');
+    document.querySelectorAll('.shelf-book.is-open').forEach(function(book){book.classList.remove('is-open');var button=book.querySelector('[data-action="shelf-preview"]');if(button)button.setAttribute('aria-expanded','false');});
+    if(opening){item.classList.add('is-open');t.setAttribute('aria-expanded','true');}else t.blur();
+  }
   else if(a==='open') openBook(t.getAttribute('data-id'));
   else if(a==='mood') searchTag(MOODS[parseInt(t.getAttribute('data-mood'),10)]);
   else if(a==='tag-raw') searchRaw(t.getAttribute('data-term'), t.getAttribute('data-label'));
@@ -893,14 +894,15 @@ document.addEventListener('input',function(e){
 });
 document.addEventListener('change',function(e){
   var a=e.target.getAttribute&&e.target.getAttribute('data-action');
-  if(e.target.id==='backupImport'){importLibrary(e.target.files[0]);e.target.value='';}
-  else if(e.target.dataset.filter){state.filters[e.target.dataset.filter]=e.target.value;if(e.target.dataset.filter==='sort')applyFilters();else runSearch();}
+  if(e.target.dataset.filter){state.filters[e.target.dataset.filter]=e.target.value;if(e.target.dataset.filter==='sort')applyFilters();else runSearch();}
   else if(a==='edition')openBook(e.target.value);
   else if(a==='page'){ setPage(e.target.getAttribute('data-id'), e.target.value); }
   else if(a==='total'){ setTotal(e.target.getAttribute('data-id'), e.target.value); }
   else if(a==='slider'){ renderMain(); }
 });
 document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&e.target.closest&&e.target.closest('.shelf-book')){var book=e.target.closest('.shelf-book');book.classList.remove('is-open');var preview=book.querySelector('[data-action="shelf-preview"]');if(preview)preview.setAttribute('aria-expanded','false');e.target.blur();}
+
   if((e.target.id==='hsearch'||e.target.id==='herosearch') && e.key==='Enter'){ clearTimeout(searchTimer); state._fromHero=(e.target.id==='herosearch'); applyQuery(); }
 });
 window.addEventListener('storage',function(e){if(e.key==='mzr_lib_v2'){state.storageBlocked=false;state.storageError='';loadLib();updateBadge();renderMain();}});

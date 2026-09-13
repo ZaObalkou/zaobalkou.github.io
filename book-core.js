@@ -84,6 +84,21 @@
     ['dětské',/\b(juvenile|children|kids|detske|pro deti)\b/]
   ];
   function canonicalTag(v){var n=norm(v),i;for(i=0;i<TAG_RULES.length;i++)if(norm(TAG_RULES[i][0])===n)return TAG_RULES[i][0];for(i=0;i<TAG_RULES.length;i++)if(TAG_RULES[i][1].test(n))return TAG_RULES[i][0];return '';}
+  function searchTag(v){
+    var n=norm(v),compact=n.replace(/\s/g,''),i,match;
+    if(!n)return '';
+    for(i=0;i<TAG_RULES.length;i++)if(norm(TAG_RULES[i][0]).replace(/\s/g,'')===compact)return TAG_RULES[i][0];
+    var aliases={fakedating:'falešný vztah',fakerelationship:'falešný vztah',pretendrelationship:'falešný vztah',enemiestolovers:'od rivality k lásce',rivalstolovers:'od rivality k lásce',odnenavistiklasce:'od rivality k lásce',sciencefiction:'sci-fi',romanticfantasy:'romantasy',fantasyromance:'romantasy'};
+    if(Object.prototype.hasOwnProperty.call(aliases,compact))return aliases[compact];
+    // Search phrases must match the whole tag, not merely contain a known word.
+    for(i=0;i<TAG_RULES.length;i++){match=TAG_RULES[i][1].exec(n);if(match&&match.index===0&&match[0]===n)return TAG_RULES[i][0];}return '';
+  }
+  function parseSearchInput(input){
+    var parts=String(input==null?'':input).split('#'),query=parts.shift().trim(),tags=[],unknownTags=[],seenUnknown=new Set();
+    parts.forEach(function(part){var phrase=part.trim().replace(/\s+/g,' ');if(!phrase)return;var tag=searchTag(phrase);
+      if(tag){if(!tags.includes(tag))tags.push(tag);}else{var key=norm(phrase)||phrase;if(!seenUnknown.has(key)){seenUnknown.add(key);unknownTags.push(phrase);}}
+    });return{query:query,tags:tags,unknownTags:unknownTags};
+  }
   function normalizeTags(b){
     var raw=norm(list(b.tags,100,200).concat(list(b.subjects,100,200)).join(' | ')),desc=norm(String(b.desc||'').replace(/<[^>]*>/g,' ').slice(0,20000));
     var found=TAG_RULES.filter(function(r){return r[1].test(raw)||(r[2]&&r[2].test(desc));}).map(function(r){return r[0];});
@@ -169,5 +184,5 @@
     if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Neplatný formát knihovny.');var out=Object.create(null),ids=Object.keys(raw);if(ids.length>5000)throw new Error('Knihovna je příliš velká (maximum 5 000 knih).');
     ids.forEach(function(id){var e=raw[id];if(BAD_KEYS.includes(id)||!e||!['want','reading','read'].includes(e.status)||!e.book||typeof e.book.title!=='string'||!e.book.title.trim()||e.book.id!==id||!id||id.length>200)throw new Error('Záloha obsahuje neplatnou knihu.');var book=snapshot(e.book),pages=integer(e.pages==null?book.pages:e.pages),page=integer(e.page);if(pages)page=Math.min(page,pages);out[id]={status:e.status,page:e.status==='read'&&pages?pages:page,pages:pages,book:book};if(typeof e.pagesManual==='boolean')out[id].pagesManual=e.pagesManual;if(checkedAt(e.updatedAt))out[id].updatedAt=checkedAt(e.updatedAt);});return out;
   }
-  return{coverCandidates:coverCandidates,norm:norm,integer:integer,year:year,safeURL:safeURL,goodreadsURL:goodreadsURL,language:language,key:key,sameBook:sameBook,sameWork:sameWork,validRating:validRating,rating:rating,merge:merge,linkCatalogue:linkCatalogue,groupWorks:groupWorks,normalizeTags:normalizeTags,matchesTags:matchesTags,relevance:relevance,rank:rank,snapshot:snapshot,validateLibrary:validateLibrary};
+  return{parseSearchInput:parseSearchInput,coverCandidates:coverCandidates,norm:norm,integer:integer,year:year,safeURL:safeURL,goodreadsURL:goodreadsURL,language:language,key:key,sameBook:sameBook,sameWork:sameWork,validRating:validRating,rating:rating,merge:merge,linkCatalogue:linkCatalogue,groupWorks:groupWorks,normalizeTags:normalizeTags,matchesTags:matchesTags,relevance:relevance,rank:rank,snapshot:snapshot,validateLibrary:validateLibrary};
 });
