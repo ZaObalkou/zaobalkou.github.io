@@ -112,6 +112,7 @@ body.dark{--faint:#BCAE92;--faint2:#A99A80}
 .filters label{display:flex;flex:1;min-width:150px;flex-direction:column;gap:6px;font-size:14px;color:var(--muted)}
 select{max-width:100%;width:100%;border:1px solid rgba(var(--ink-rgb),.24);background:var(--bg);color:var(--ink);padding:9px;border-radius:7px;font:inherit}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,label:focus-within{outline:3px solid var(--accent);outline-offset:4px}
+#main:focus{outline:none}
 .book-card{min-width:0;color:var(--ink)}
 .book-card>.cover{width:100%}
 .c-title,.desc,.book-card{overflow-wrap:anywhere}
@@ -132,9 +133,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,la
 @media(max-width:420px){.hdr-in nav>.nav-btn[data-action="home"]{display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
-<link rel="stylesheet" href="theme-palette.css?v=20260913-3">
-<link rel="stylesheet" href="reader-tools.css?v=20260913-3">
-<link rel="stylesheet" href="bookshelf.css?v=20260913-3">
+<link rel="stylesheet" href="theme-palette.css?v=20260913-4">
+<link rel="stylesheet" href="reader-tools.css?v=20260913-4">
+<link rel="stylesheet" href="bookshelf.css?v=20260913-4">
 </head>
 <body>
 <a class="skip-link" href="#main">Přeskočit na obsah</a>
@@ -164,14 +165,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,la
 <dialog id="readerDialog" aria-labelledby="dialogTitle"></dialog>
 <div id="toastHost" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=20260913-3"></script>
-<script src="book-core.js?v=20260913-3"></script>
-<script src="catalogue-data.js?v=20260913-3"></script>
-<script src="catalogue-client.js?v=20260913-3"></script>
-<script src="qrcodegen.js?v=20260913-3"></script>
-<script src="library-tools.js?v=20260913-3"></script>
-<script src="bookshelf.js?v=20260913-3"></script>
-<script src="theme-palette.js?v=20260913-3"></script>
+<script src="config.js?v=20260913-4"></script>
+<script src="book-core.js?v=20260913-4"></script>
+<script src="catalogue-data.js?v=20260913-4"></script>
+<script src="catalogue-client.js?v=20260913-4"></script>
+<script src="qrcodegen.js?v=20260913-4"></script>
+<script src="library-tools.js?v=20260913-4"></script>
+<script src="bookshelf.js?v=20260913-4"></script>
+<script src="theme-palette.js?v=20260913-4"></script>
 <script>
 var Core = window.BookCore;
 (function(){
@@ -674,7 +675,7 @@ function detailHTML(){
     +'<div style="font-size:20px;color:var(--muted);font-style:italic;margin-bottom:18px">'+esc(b.author)+'</div>'+bookMeta(b)+editionHTML(b)+(b.series?'<p class="book-meta">Série: '+esc(b.series)+(b.seriesNumber?' · '+esc(b.seriesNumber)+'. díl':'')+'</p>':'')
     + (tagChips?'<div style="display:flex;flex-wrap:wrap;gap:9px;margin-bottom:24px">'+tagChips+'</div>':'')
     +'<p class="desc">'+(d?esc(b.desc||'Popis této knihy zatím není k dispozici.'):'Načítám popis…')+'</p>'
-    + appleLink+'<div class="toolbar"><button class="tag-chip" data-action="copyBook">Kopírovat odkaz na knihu</button><button class="tag-chip" data-action="refreshDetail"'+(state.detailLoading?' disabled':'')+'>Doplnit údaje</button></div>'
+    + appleLink+'<div class="toolbar"><button class="tag-chip" data-action="copyBook">Kopírovat odkaz na knihu</button></div>'
     +'<div style="background:var(--card);border:1px solid rgba(var(--ink-rgb),.16);border-radius:14px;padding:24px;margin:0 0 36px">'
     +'<div style="font-family:\'Newsreader\',serif;font-size:20px;margin-bottom:16px">Moje knihovna</div>'
     +'<div style="display:flex;flex-wrap:wrap;gap:10px">'
@@ -880,7 +881,6 @@ document.addEventListener('click',function(e){
   else if(a==='copyTransfer')copyText(el('transferUrl').value);
   else if(a==='applyTransfer')applyTransfer();
   else if(a==='copyBook')copyText(LibraryTools.bookLink(state.detail));
-  else if(a==='refreshDetail')openBook(state.detail.id);
   else if(a==='exportRaw')exportLibrary(true);
   else if(a==='undo')undoRemove();
   else if(a==='status') setStatus(t.getAttribute('data-id'),t.getAttribute('data-status'));
