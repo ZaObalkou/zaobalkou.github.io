@@ -6,7 +6,7 @@
   'use strict';
   var MAX_LINK = 60000, MAX_RAW = 2000000, MAX_BOOK_LINK = 2070, MAX_QR = 1800;
   var encoder = new TextEncoder(), decoder = new TextDecoder('utf-8', {fatal:true});
-  var bookFields = ['id','title','author','isbn','language','year','pages','series','seriesNumber','workId','olEditionId','coverUrl','firstPublishYear','yearKind','tags','aRating','aCount','olRating','olCount','gRating','gCount','grRating','grCount','grUrl','grCheckedAt','pageSource'];
+  var bookFields = ['id','title','author','isbn','language','year','pages','series','seriesNumber','workId','olEditionId','coverUrl','firstPublishYear','yearKind','tags','aRating','aCount','olRating','olCount','gRating','gCount','grRating','grCount','grUrl','grCheckedAt','pageSource','spineUrl'];
   function fail(message){ throw new Error(message); }
   function baseURL(base){
     var url;

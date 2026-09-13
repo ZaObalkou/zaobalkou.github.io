@@ -109,7 +109,7 @@
   function matchesTags(b,terms){var tags=normalizeTags(b);return(terms||[]).every(function(t){var tag=canonicalTag(t);if(norm(t)==='romantasy')return tags.includes('romantasy')||(tags.includes('fantasy')&&tags.includes('romantika'));return !!tag&&tags.includes(tag);});}
   function copyBook(b){var out={};Object.keys(b).forEach(function(k){if(!BAD_KEYS.includes(k)&&k!=='editions')out[k]=b[k];});return out;}
   function mergePair(target,b){
-    ['pages','pageSource','coverUrl','coverUrlL','desc','link','isbn','language','firstPublishYear','year','yearKind','workId','olWorkId','olEditionId','series','seriesNumber','publisher','editionId','format','metadataSource'].forEach(function(k){if(!target[k]&&b[k])target[k]=b[k];});
+    ['pages','pageSource','coverUrl','coverUrlL','spineUrl','desc','link','isbn','language','firstPublishYear','year','yearKind','workId','olWorkId','olEditionId','series','seriesNumber','publisher','editionId','format','metadataSource'].forEach(function(k){if(!target[k]&&b[k])target[k]=b[k];});
     ['a','ol','g'].forEach(function(p){if(validRating(b[p+'Rating'])&&(!validRating(target[p+'Rating'])||integer(b[p+'Count'],1000000000)>integer(target[p+'Count'],1000000000))){target[p+'Rating']=b[p+'Rating'];target[p+'Count']=b[p+'Count'];}});
     if(hasGoodreads(b)&&(!hasGoodreads(target)||Date.parse(b.grCheckedAt)>Date.parse(target.grCheckedAt)))['grRating','grCount','grUrl','grCheckedAt'].forEach(function(k){target[k]=b[k];});
     target.tags=unique(list(target.tags,100,200).concat(list(b.tags,100,200))).slice(0,100);
@@ -172,7 +172,7 @@
     b=b||{};var out={id:String(b.id||'').slice(0,200),title:String(b.title||'').slice(0,500),author:String(b.author||'Neznámý autor').slice(0,500)};
     out.pages=integer(b.pages);out.year=year(b.year);out.firstPublishYear=year(b.firstPublishYear);out.yearKind=b.yearKind==='original'?'original':'edition';out.language=language(b.language);
     out.tags=normalizeTags(b);out.aliases=list(b.aliases,20,500);out.authorAliases=list(b.authorAliases,20,500);out.desc=String(b.desc||'').slice(0,20000);out.isbn=isbn(b.isbn);
-    ['coverUrl','coverUrlL','link'].forEach(function(k){out[k]=safeURL(b[k]);});
+    ['coverUrl','coverUrlL','spineUrl','link'].forEach(function(k){out[k]=safeURL(b[k]);});
     ['workId','olWorkId','olEditionId','editionId','pageSource','publisher','format','metadataSource'].forEach(function(k){if(typeof b[k]==='string')out[k]=b[k].slice(0,k==='pageSource'?500:200);});
     if(typeof b.source==='string')out.source=b.source.slice(0,100);if(typeof b.verified==='boolean')out.verified=b.verified;if(checkedAt(b.verifiedAt))out.verifiedAt=checkedAt(b.verifiedAt);
     if(typeof b.series==='string')out.series=b.series.slice(0,500);if(typeof b.seriesNumber==='number'&&Number.isFinite(b.seriesNumber)&&b.seriesNumber>=0&&b.seriesNumber<10000)out.seriesNumber=b.seriesNumber;else if(typeof b.seriesNumber==='string'&&/^\d{1,4}(?:[.,]\d{1,2})?$/.test(b.seriesNumber))out.seriesNumber=b.seriesNumber;

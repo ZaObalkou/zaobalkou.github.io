@@ -137,9 +137,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,la
 @media(max-width:420px){.hdr-in nav>.nav-btn[data-action="home"]{display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
-<link rel="stylesheet" href="theme-palette.css?v=20260913-1">
-<link rel="stylesheet" href="reader-tools.css?v=20260913-1">
-<link rel="stylesheet" href="bookshelf.css?v=20260913-1">
+<link rel="stylesheet" href="theme-palette.css?v=20260913-2">
+<link rel="stylesheet" href="reader-tools.css?v=20260913-2">
+<link rel="stylesheet" href="bookshelf.css?v=20260913-2">
 </head>
 <body>
 <a class="skip-link" href="#main">Přeskočit na obsah</a>
@@ -169,14 +169,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,la
 <dialog id="readerDialog" aria-labelledby="dialogTitle"></dialog>
 <div id="toastHost" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=20260913-1"></script>
-<script src="book-core.js?v=20260913-1"></script>
-<script src="catalogue-data.js?v=20260913-1"></script>
-<script src="catalogue-client.js?v=20260913-1"></script>
-<script src="qrcodegen.js?v=20260913-1"></script>
-<script src="library-tools.js?v=20260913-1"></script>
-<script src="bookshelf.js?v=20260913-1"></script>
-<script src="theme-palette.js?v=20260913-1"></script>
+<script src="config.js?v=20260913-2"></script>
+<script src="book-core.js?v=20260913-2"></script>
+<script src="catalogue-data.js?v=20260913-2"></script>
+<script src="catalogue-client.js?v=20260913-2"></script>
+<script src="qrcodegen.js?v=20260913-2"></script>
+<script src="library-tools.js?v=20260913-2"></script>
+<script src="bookshelf.js?v=20260913-2"></script>
+<script src="theme-palette.js?v=20260913-2"></script>
 <script>
 var Core = window.BookCore;
 (function(){
@@ -458,10 +458,18 @@ function coverImageHTML(b,big,style){
   if(!urls.length)return '';
   return '<img class="cv" src="'+attr(urls.shift())+'" data-cover-fallbacks="'+attr(JSON.stringify(urls))+'" alt="" loading="lazy" style="'+attr(style||'')+'">';
 }
+function spineImageHTML(b){
+  var known=[b].concat(SEEDS.filter(function(seed){return Core.sameBook(b,seed);}));
+  var source=known.map(function(book){return Core.safeURL(book.spineUrl);}).find(Boolean);
+  if(!source)return coverImageHTML(b,false);
+  var fallbacks=Core.coverCandidates(b,known,false).filter(function(url){return url!==source;});
+  return '<img class="cv" src="'+attr(source)+'" data-spine-original="true" data-cover-fallbacks="'+attr(JSON.stringify(fallbacks))+'" alt="" loading="lazy">';
+}
 document.addEventListener('error',function(event){
   var img=event.target;if(!img||img.tagName!=='IMG'||!img.hasAttribute('data-cover-fallbacks'))return;
   var urls;try{urls=JSON.parse(img.getAttribute('data-cover-fallbacks'));}catch(e){urls=[];}
   var next=Array.isArray(urls)&&urls.length?Core.safeURL(urls.shift()):'';
+  img.removeAttribute('data-spine-original');
   if(next){img.setAttribute('data-cover-fallbacks',JSON.stringify(urls));img.src=next;}else img.remove();
 },true);
 function coverHTML(b,opts){
@@ -703,9 +711,9 @@ function libraryHTML(){
   }
   h+='<div class="toolbar" aria-label="Zobrazení knihovny"><button class="tag-chip" data-action="libraryView" data-mode="shelf" aria-pressed="'+(state.libraryView==='shelf')+'">Poličky</button><button class="tag-chip" data-action="libraryView" data-mode="overview" aria-pressed="'+(state.libraryView==='overview')+'">Přehled a pokrok</button></div>';
   if(state.libraryView==='shelf'){
-    h+='<p class="book-meta shelf-help">Najeď na hřbet nebo na něj klepni. Kniha se vysune a ukáže přebal; tlačítkem otevřeš detail a pokrok čtení.</p>';
+    h+='<p class="book-meta shelf-help">Najeď na hřbet pro náhled přebalu. Kliknutím nebo klepnutím na hřbet otevřeš knihu.</p>';
     [['Rozečtené',reading,'reading'],['Chci přečíst',want,'want'],['Přečtené',read,'read']].forEach(function(group){
-      if(group[1].length)h+='<section class="shelf-section"><h2>'+group[0]+' <span>'+group[1].length+'</span></h2>'+BookShelf.render(group[1],{esc:esc,attr:attr,coverHTML:coverHTML,status:group[2]})+'</section>';
+      if(group[1].length)h+='<section class="shelf-section"><h2>'+group[0]+' <span>'+group[1].length+'</span></h2>'+BookShelf.render(group[1],{esc:esc,attr:attr,coverHTML:coverHTML,spineImageHTML:spineImageHTML,status:group[2]})+'</section>';
     });
     return h+'</div>';
   }
@@ -856,11 +864,6 @@ document.addEventListener('click',function(e){
   else if(a==='back'){setRoute(state.returnView==='library'?'#shelf':'');detailSeq++;state.view=state.returnView==='library'?'library':(state.activeTags.length||state.query?'search':'home');if(state.view==='search'&&!state.rawResults.length)runSearch();else renderMain();}
   else if(a==='library') goLibrary();
   else if(a==='libraryView'){state.libraryView=t.getAttribute('data-mode')==='overview'?'overview':'shelf';renderMain();}
-  else if(a==='shelf-preview'){
-    var item=t.closest('.shelf-book'), opening=!item.classList.contains('is-open');
-    document.querySelectorAll('.shelf-book.is-open').forEach(function(book){book.classList.remove('is-open');var button=book.querySelector('[data-action="shelf-preview"]');if(button)button.setAttribute('aria-expanded','false');});
-    if(opening){item.classList.add('is-open');t.setAttribute('aria-expanded','true');}else t.blur();
-  }
   else if(a==='open') openBook(t.getAttribute('data-id'));
   else if(a==='mood') searchTag(MOODS[parseInt(t.getAttribute('data-mood'),10)]);
   else if(a==='tag-raw') searchRaw(t.getAttribute('data-term'), t.getAttribute('data-label'));
@@ -901,7 +904,7 @@ document.addEventListener('change',function(e){
   else if(a==='slider'){ renderMain(); }
 });
 document.addEventListener('keydown',function(e){
-  if(e.key==='Escape'&&e.target.closest&&e.target.closest('.shelf-book')){var book=e.target.closest('.shelf-book');book.classList.remove('is-open');var preview=book.querySelector('[data-action="shelf-preview"]');if(preview)preview.setAttribute('aria-expanded','false');e.target.blur();}
+  if(e.key==='Escape'&&e.target.closest&&e.target.closest('.shelf-book'))e.target.blur();
 
   if((e.target.id==='hsearch'||e.target.id==='herosearch') && e.key==='Enter'){ clearTimeout(searchTimer); state._fromHero=(e.target.id==='herosearch'); applyQuery(); }
 });
