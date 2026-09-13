@@ -78,7 +78,41 @@ test('Canonical Czech browsing tags become useful English catalogue subjects',as
   const calls=[];const client=create(url=>{calls.push(url);return json({docs:[]});});
   await client.tags(['drak','království'],{});
   const query=new URL(calls.find(u=>u.includes('search.json'))).searchParams.get('q');
-  assert.match(query,/subject:"dragons"/);assert.match(query,/subject:"royalty"/);assert.match(query,/first_publish_year:\[/);
+  assert.match(query,/subject:"dragons"/);assert.match(query,/subject:"royalty"/);assert.doesNotMatch(query,/first_publish_year:/);
+});
+
+test('Czech tag browsing includes older works, useful relevance pages and exact Czech editions',async()=>{
+  const calls=[];
+  function work(n){return {key:'/works/OL'+(1000+n)+'W',title:'Science book '+n,author_name:['Author '+n],first_publish_year:n===1?1965:2020,subject:['Science fiction'],editions:{docs:[{key:'/books/OL'+(1000+n)+'M',title:'Kniha '+n,language:[n===2?'eng':'cze'],publish_year:[2025],number_of_pages:320}]}};}
+  const client=create(url=>{
+    calls.push(url);const params=new URL(url).searchParams,offset=Number(params.get('offset'));
+    const start=params.get('sort')==='new'?30:offset;
+    return json({numFound:123,docs:Array.from({length:Math.min(60,123-start)},(_,i)=>work(start+i))});
+  });
+  const result=await client.tags(['sci-fi'],{language:'cs',year:'all'});
+  assert.equal(result.failed,0);assert.equal(result.total,1);
+  assert.equal(result.books.length,119,'two relevance pages are merged with the recent page, without duplicate works');
+  assert.ok(result.books.some(b=>b.firstPublishYear===1965),'a recent translation of an old work remains discoverable');
+  assert.ok(result.books.every(b=>b.language==='cs'),'language is taken only from the selected edition');
+  assert.equal(calls.length,3,'paging is bounded even when more works are available');
+  assert.ok(calls.some(url=>new URL(url).searchParams.get('offset')==='60'));
+  calls.forEach(url=>{const q=new URL(url).searchParams.get('q');assert.match(q,/language:cze/);assert.match(q,/subject:"vědeckofantastické romány"/);assert.doesNotMatch(q,/first_publish_year:/);});
+});
+
+test('Tag browsing preserves explicit edition year and a working page when another request fails',async()=>{
+  const calls=[],doc={key:'/works/OL1W',title:'A Book',author_name:['An Author'],first_publish_year:1965,subject:['Science fiction'],editions:{docs:[{key:'/books/OL1M',title:'Kniha',language:['cze'],publish_year:[2025],number_of_pages:320}]}};
+  const client=create(url=>{calls.push(url);const params=new URL(url).searchParams;if(params.get('sort')==='new')return Promise.reject(new Error('offline'));return json({numFound:1,docs:[doc]});});
+  const result=await client.tags(['sci-fi'],{language:'cs',year:2025});
+  assert.equal(result.failed,0);assert.equal(result.books.length,1);assert.equal(calls.length,2);
+  calls.forEach(url=>{const q=new URL(url).searchParams.get('q');assert.match(q,/publish_year:2025/);assert.doesNotMatch(q,/first_publish_year:/);});
+  const failed=await create(()=>Promise.reject(new Error('offline'))).tags(['sci-fi'],{language:'cs'});
+  assert.equal(failed.failed,1);assert.equal(failed.total,1);assert.equal(failed.issues.length,1);
+});
+
+test('A failed optional next page keeps the first catalogue page',async()=>{
+  const client=create(url=>{const params=new URL(url).searchParams;if(Number(params.get('offset')))return Promise.reject(new Error('offline'));return json({numFound:1000,docs:Array.from({length:60},(_,n)=>({key:'/works/OL'+(1000+n)+'W',title:'Book '+n,subject:['science fiction'],author_name:['Author '+n],editions:{docs:[{key:'/books/OL'+(1000+n)+'M',title:'Book '+n,language:['eng'],publish_year:[2025],number_of_pages:320}]}}))});});
+  const result=await client.tags(['sci-fi'],{language:'en'});
+  assert.equal(result.failed,0);assert.equal(result.books.length,60);
 });
 
 test('Configured Goodreads feed is preferred only with verifiable source identity',async()=>{
@@ -89,6 +123,18 @@ test('Configured Goodreads feed is preferred only with verifiable source identit
   },{origin:'https://zaobalkou.github.io',config:{goodreadsRatingsUrl:'/ratings.json'},data:{books:[seed]}});
   const result=await client.search('A Book',{language:'en'});
   assert.equal(Core.rating(result.books[0]).source,'Goodreads');assert.equal(Core.rating(result.books[0]).value,4.1);
+});
+
+test('Goodreads feed prefers the exact ISBN and preserves explicit work and snapshot provenance',async()=>{
+  const seed=Object.assign({},edition,{pages:320});
+  const rows=[{workId:seed.workId,scope:'work',rating:4.3,count:4000000,url:'https://www.goodreads.com/book/show/123-book',checkedAt:'2026-09-12',snapshot:true},{isbn:seed.isbn,rating:4.1,count:200,url:'https://www.goodreads.com/book/show/456-edition',checkedAt:'2026-09-12',snapshot:'true'}];
+  function feedClient(feed){return create(url=>json(url.endsWith('/ratings.json')?{ratings:feed}:url.includes('search.json')?{docs:[]}:{results:[]}),{origin:'https://zaobalkou.github.io',config:{goodreadsRatingsUrl:'/ratings.json'},data:{books:[seed]}});}
+  const exact=(await feedClient(rows).search('A Book',{})).books[0];
+  assert.equal(exact.grRating,4.1);assert.equal(exact.grScope,'edition');assert.equal(exact.grSnapshot,false);
+  const work=(await feedClient([rows[0]]).search('A Book',{})).books[0];
+  assert.equal(work.grRating,4.3);assert.equal(work.grCount,4000000);assert.equal(work.grScope,'work');assert.equal(work.grSnapshot,true);
+  const unrelated=(await feedClient([Object.assign({},rows[0],{scope:'edition',isbn:'9780000000099'})]).search('A Book',{})).books[0];
+  assert.ok(!unrelated.grRating,'an explicitly edition-specific rating cannot match a different ISBN through workId');
 });
 
 test('Ratings feed cannot send catalogue requests to an arbitrary configured origin',async()=>{

@@ -94,6 +94,15 @@ test('tag discovery recognizes modern kingdom and dragon synonyms with AND seman
  const plain=book('p',{desc:'An ordinary family eats a royal breakfast.'});assert.equal(Core.matchesTags(plain,['kingdoms']),false);
  assert.equal(Core.normalizeTags(book('children',{tags:['Juvenile fiction']})).includes('young adult'),false);
 });
+test('a combined science-fiction-and-fantasy category does not turn fantasy into sci-fi',()=>{
+ for(const category of ['Science Fiction & Fantasy','Science Fiction, Fantasy, & Magic','Science fiction, fantasy, horror','Fantasy and Science Fiction']){
+   const fantasy=book('fantasy',{tags:[category,'Fantasy'],desc:'A book from Science Fiction & Fantasy.'});
+   assert.equal(Core.matchesTags(fantasy,['sci-fi']),false,category);
+   assert.equal(Core.matchesTags({...fantasy,tags:[category,'Science fiction']},['sci-fi']),true);
+ }
+ assert.equal(Core.matchesTags(book('cs',{tags:['vědeckofantastické romány']}),['sci-fi']),true);
+ assert.equal(Core.matchesTags(book('both',{tags:['sci-fi','fantasy']}),['sci-fi','fantasy']),true);
+});
 test('Goodreads wins only with usable rating, count and traceable checked source',()=>{
  const base={gRating:4.9,gCount:10000,grRating:4.1,grCount:20,grUrl:'https://www.goodreads.com/book/show/123-title',grCheckedAt:'2026-01-01'};
  assert.equal(Core.rating(base).source,'Goodreads');
@@ -105,6 +114,24 @@ test('snapshot preserves edition metadata, broad language codes and manual progr
  const lib=Core.validateLibrary({x:{status:'reading',page:12,pages:0,pagesManual:true,book:b}});
  assert.equal(lib.x.pagesManual,true);assert.equal(lib.x.pages,0);assert.equal(lib.x.page,12);assert.equal(lib.x.book.language,'de');assert.equal(lib.x.book.olEditionId,'OL2M');assert.equal(lib.x.book.seriesNumber,1.5);assert.equal(lib.x.book.editions,undefined);
  assert.equal(lib.x.book.metadataSources[0].url,'https://publisher.example/book');
+});
+test('only explicitly work-scoped Goodreads ratings reach another language edition',()=>{
+ const rating={grRating:4.56,grCount:3808364,grUrl:'https://www.goodreads.com/book/show/61431922-fourth-wing',grCheckedAt:'2026-09-13',grSnapshot:true};
+ const cs=book('cs',{workId:'work:wing',isbn:'9781234567890',pages:536,olRating:4.1,olCount:38});
+ const en=book('en',{workId:'work:wing',isbn:'9781234567891',language:'en',pages:498,...rating});
+ assert.equal(Core.rating(Core.groupWorks([cs,en],{language:'cs'})[0]).source,'Open Library');
+ const selected=Core.groupWorks([cs,{...en,grScope:'work'}],{language:'cs'})[0];
+ assert.equal(Core.rating(selected).source,'Goodreads');assert.equal(selected.grScope,'work');assert.equal(selected.grSnapshot,true);
+ assert.equal(selected.pages,536);assert.equal(selected.editions.find(e=>e.id==='en').pages,498);
+ assert.equal(cs.grRating,undefined);
+ const unrelated=book('unrelated',{title:'Another story',workId:'other',author:'Another author'});
+ assert.equal(Core.groupWorks([unrelated,{...en,grScope:'work'}],{language:'cs'})[0].grRating,undefined);
+});
+test('saved Goodreads provenance survives snapshots and is replaced with newer metadata',()=>{
+ const saved=book('saved',{grRating:4.56,grCount:3808364,grUrl:'https://www.goodreads.com/book/show/61431922-fourth-wing',grCheckedAt:'2026-09-12',grScope:'work',grSnapshot:true});
+ const snapshot=Core.snapshot(saved);assert.equal(snapshot.grSnapshot,true);assert.equal(snapshot.grScope,'work');assert.equal(Core.rating(snapshot).snapshot,true);
+ const newer={...saved,grRating:4.5,grCheckedAt:'2026-09-13',grScope:'edition',grSnapshot:false};
+ const merged=Core.merge([[saved],[newer]])[0];assert.equal(merged.grSnapshot,false);assert.equal(merged.grScope,'edition');assert.equal(merged.grRating,4.5);
 });
 test('unsafe input cannot poison prototypes, URLs or persistence metadata',()=>{
  const poison=JSON.parse('{"id":"x","title":"X","author":"A","__proto__":{"polluted":true},"link":"javascript:alert(1)","metadataSources":[{"url":"data:text/html,hi"}],"aliases":["safe",{"bad":1}]}');

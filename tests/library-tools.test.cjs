@@ -65,10 +65,12 @@ test('link creation falls back to uncompressed data on browsers without Compress
   } finally {globalThis.CompressionStream=original;}
 });
 test('library transfer retains the complete Goodreads source metadata needed by validation',async()=>{
-  const input=library();Object.assign(input['cs-edition'].book,{grRating:4.2,grCount:123,grUrl:'https://www.goodreads.com/book/show/123',grCheckedAt:'2026-09-10'});
+  const input=library();Object.assign(input['cs-edition'].book,{grRating:4.2,grCount:123,grUrl:'https://www.goodreads.com/book/show/123',grCheckedAt:'2026-09-10',grScope:'work',grSnapshot:true});
   const transfer=await Tools.transferLink(input);const restored=await Tools.parseLibraryFragment(new URL(transfer.url).hash);
   assert.equal(restored['cs-edition'].book.grRating,4.2);
   assert.equal(restored['cs-edition'].book.grCheckedAt,'2026-09-10T00:00:00.000Z');
+  assert.equal(restored['cs-edition'].book.grScope,'work');
+  assert.equal(restored['cs-edition'].book.grSnapshot,true);
 });
 test('uncompressed links also import and completed progress is clamped',async()=>{
   const raw={v:1,k:'zaobalkou-library',b:[[['one','Kniha','Autor',null,'en',2025,200],'read',900,200]]};
