@@ -6,7 +6,7 @@
   'use strict';
   var MAX_LINK = 60000, MAX_RAW = 2000000, MAX_BOOK_LINK = 2070, MAX_QR = 1800;
   var encoder = new TextEncoder(), decoder = new TextDecoder('utf-8', {fatal:true});
-  var bookFields = ['id','title','author','isbn','language','year','pages','series','seriesNumber','workId','olEditionId','coverUrl','firstPublishYear','yearKind','tags','aRating','aCount','olRating','olCount','gRating','gCount','grRating','grCount','grUrl','grCheckedAt','pageSource','spineUrl','grScope','grSnapshot'];
+  var bookFields = ['id','title','author','isbn','language','year','pages','series','seriesNumber','workId','olEditionId','coverUrl','firstPublishYear','yearKind','tags','aRating','aCount','olRating','olCount','gRating','gCount','grRating','grCount','grUrl','grCheckedAt','pageSource','spineUrl','grScope','grSnapshot','grId','grWorkIds','olWorkId'];
   function fail(message){ throw new Error(message); }
   function baseURL(base){
     var url;
@@ -36,7 +36,7 @@
     return bookFields.map(function(field){
       if(field === 'coverUrl' && !withCover) return null;
       var value = clean[field];
-      return value === undefined || value === '' || value === 0 ? null : value;
+      return value === undefined || value === '' || (value === 0 && field !== 'seriesNumber') ? null : value;
     });
   }
   function unpackBook(packed){
@@ -68,7 +68,7 @@
       // A public URL is untrusted input; source assertions and ratings must come
       // from the catalogue again, even if the link includes a plausible timestamp.
       ['a','ol','g','gr'].forEach(function(prefix){delete book[prefix+'Rating'];delete book[prefix+'Count'];});
-      ['grUrl','grCheckedAt','verified','verifiedAt','source','pageSource'].forEach(function(field){delete book[field];});
+      ['grUrl','grCheckedAt','grScope','grSnapshot','grId','grWorkIds','verified','verifiedAt','source','pageSource'].forEach(function(field){delete book[field];});
       return book;
     } catch(e){ fail('Odkaz na knihu se nepodařilo přečíst.'); }
   }
@@ -96,14 +96,14 @@
   async function transferLink(library, base){
     var payload = libraryPayload(library), bytes = encoder.encode(JSON.stringify(payload));
     if(!payload.b.length) fail('Nejdřív si přidej do knihovny alespoň jednu knihu.');
-    if(bytes.length > MAX_RAW) fail('Knihovna je pro přenos odkazem příliš velká. Použij prosím zálohu do souboru.');
+    if(bytes.length > MAX_RAW) fail('Knihovna se už nevejde do jednoho přenosového odkazu. Tvoje uložené knihy zůstávají zachované.');
     var kind = 'u';
     if(typeof CompressionStream !== 'undefined'){
       var compressed = await readBounded(new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip')),MAX_RAW);
       if(compressed.length < bytes.length){bytes = compressed; kind = 'g';}
     }
     var url = baseURL(base) + '#library=' + kind + toBase64(bytes);
-    if(url.length > MAX_LINK) fail('Knihovna je pro přenos odkazem příliš velká. Použij prosím zálohu do souboru.');
+    if(url.length > MAX_LINK) fail('Knihovna se už nevejde do jednoho přenosového odkazu. Tvoje uložené knihy zůstávají zachované.');
     return {url:url,count:payload.b.length,qrSvg:qrSVG(url)};
   }
   async function parseLibraryFragment(hash){

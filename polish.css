@@ -1,0 +1,111 @@
+/* A quieter reading interface. Colours continue to come from the chosen palette. */
+html{scroll-padding-top:94px}
+body{line-height:1.45}
+.hdr{box-shadow:0 2px 12px rgba(var(--ink-rgb),.025)}
+.hdr-in{gap:18px}
+.hdr-in nav{margin-left:auto}
+.nav-btn{min-height:42px}
+.icon-btn{width:42px;height:42px}
+.hsearch-wrap{min-height:44px}
+.hsearch-wrap input::placeholder{color:var(--muted);opacity:1}
+.hsearch-wrap input::-webkit-search-cancel-button{cursor:pointer}
+.home-hero{padding:38px 0 20px!important}
+.home-hero>div:first-child{font-size:12px!important;letter-spacing:.24em!important;margin-bottom:16px!important}
+.home-title{font-size:clamp(40px,5.7vw,64px)!important;margin-bottom:16px!important;text-wrap:balance}
+.home-intro{font-size:18px!important;line-height:1.55!important;max-width:570px!important;text-wrap:pretty}
+.home-search{margin-top:22px!important;min-height:54px;box-shadow:0 4px 18px rgba(var(--ink-rgb),.055)!important}
+.home-search:focus-within{box-shadow:0 0 0 3px rgba(var(--accent-rgb),.12),0 4px 18px rgba(var(--ink-rgb),.055)!important}
+.home-tags{gap:8px!important;margin-top:18px!important}
+.discovery-section{margin-top:32px!important}
+.sec-head{margin-bottom:20px}
+.sec-head h2{text-wrap:balance}
+.book-card{border-radius:7px}
+.book-card>.cover{box-shadow:0 7px 18px rgba(var(--ink-rgb),.15),inset 0 0 0 1px rgba(255,255,255,.08)}
+.book-meta,.source-status,.shelf-preview-author,.shelf-preview-meta,.palette-help{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:12px;line-height:1.6}
+.book-meta{margin-top:7px}
+.edition-count{font-size:11.5px}
+.toolbar{gap:8px}
+.filters{gap:14px;padding:16px 18px;border-radius:14px;box-shadow:0 2px 8px rgba(var(--ink-rgb),.025)}
+.filters label{font-size:14px;gap:7px}
+select{min-height:44px;padding:9px 12px;border-radius:9px;cursor:pointer}
+.tag-chip,.tag-active{min-height:38px;line-height:1.35}
+.tag-chip:hover,.mood:hover{background:rgba(var(--accent-rgb),.09);color:var(--accent);border-color:rgba(var(--accent-rgb),.45);transform:none}
+.toolbar [aria-pressed=true]:hover{background:var(--accent);color:var(--onaccent);border-color:var(--accent)}
+.tag-chip:disabled:hover{background:var(--card);color:var(--muted);border-color:rgba(var(--ink-rgb),.18)}
+.numin:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.12)}
+button:focus-visible,a:focus-visible{outline-width:2px;outline-offset:3px}
+button[data-action="back"],button[data-action="remove"],button[data-action="clearTag"]{border-radius:7px}
+.skip-link{border-radius:9px;box-shadow:0 4px 14px rgba(var(--ink-rgb),.12)}
+.detail-layout{gap:40px!important}
+.detail-info{min-width:0!important;overflow-wrap:anywhere}
+.detail-info h1{text-wrap:balance}
+.detail-cover{top:94px!important}
+.detail-cover>div{box-shadow:0 16px 36px rgba(var(--ink-rgb),.24)!important}
+.detail-info .desc{font-size:18px;line-height:1.65;text-wrap:pretty}
+.edition-picker{padding:15px 16px;border-radius:14px}
+.edition-picker label{font-size:16px}
+.rcard{border-radius:14px;box-shadow:0 2px 8px rgba(var(--ink-rgb),.025)}
+.rcard a{display:inline-block;text-underline-offset:3px}
+.rcard a:hover{color:var(--accent)}
+.source-status summary{padding:7px 0;color:var(--muted);text-underline-offset:3px}
+.source-status summary:hover{text-decoration:underline}
+.shelf-help{max-width:70ch}
+.shelf-section h2 span{display:inline-grid;place-items:center;min-width:25px;height:25px;padding:0 7px;border-radius:999px;background:rgba(var(--accent-rgb),.09);color:var(--accent);font-size:13px}
+.shelf-preview-caption{box-shadow:0 6px 16px rgba(var(--ink-rgb),.07)}
+.shelf-preview-meta{font-size:11px}
+.dialog-close{display:grid;place-items:center;min-width:40px;min-height:40px;border-radius:9px;margin:-8px -9px 0 8px}
+.dialog-close:hover{background:rgba(var(--ink-rgb),.06);color:var(--ink)}
+.toast{line-height:1.4;bottom:max(24px,env(safe-area-inset-bottom))}
+
+/* A deliberate second header row avoids a partially wrapped search on tablets. */
+@media(max-width:900px){
+ html{scroll-padding-top:146px}
+ .hdr-in{gap:10px 16px}
+ .hdr-in>.hsearch-wrap{order:3;flex-basis:100%;max-width:none}
+ .hdr-in nav{margin-left:auto;flex:none}
+ .detail-cover{width:240px!important;top:146px!important}
+ .detail-layout{gap:30px!important}
+ .home-hero{padding-top:30px!important}
+}
+@media(max-width:640px){
+ .hdr-in{padding:10px 14px;gap:8px}
+ .hdr-in .palette-toggle,.hdr-in #themeBtn{width:42px;height:42px}
+ .hdr-in .nav-lib{min-height:42px}
+ .home-hero{padding:28px 0 14px!important}
+ .home-hero>div:first-child{font-size:11px!important;letter-spacing:.2em!important}
+ .home-title{font-size:clamp(38px,8.5vw,50px)!important}
+ .home-intro{font-size:17px!important}
+ .home-search{padding:11px 16px!important;margin-top:20px!important}
+ .home-search input{font-size:17px!important}
+ .home-tags{gap:7px!important;margin-top:16px!important}
+ .discovery-section{margin-top:24px!important}
+ .filters{gap:12px;padding:14px}
+ .filters label{min-width:0;flex-basis:calc(50% - 6px);width:auto}
+ .filters label:first-child{flex-basis:100%}
+ .filters select,.numin{font-size:16px}
+ .tag-chip,.tag-active{min-height:42px;padding:9px 13px}
+ .detail-layout{gap:24px!important}
+ .detail-cover{width:180px!important;position:relative!important;top:auto!important;margin:0 auto!important}
+ .detail-info{flex-basis:100%!important}
+ .edition-picker{padding:14px}
+ #readerDialog{padding:22px;max-height:calc(100dvh - 32px)}
+ .dialog-close{min-width:44px;min-height:44px}
+ .shelf-section{margin-top:26px}
+ .book-meta{font-size:11.5px}
+ .toast{padding:12px 17px;font-size:16px}
+}
+@media(hover:none){
+ .book-card:hover .cover{transform:none;box-shadow:0 7px 18px rgba(var(--ink-rgb),.15)}
+ .mood:hover,.lib-btn:hover{transform:none}
+ .tag-chip,.mood,.lib-btn,.nav-btn,.shelf-spine{touch-action:manipulation}
+}
+
+/* The community score stays beside the book, above the long description. */
+.detail-primary-rating{margin:12px 0 20px;min-height:31px}
+.primary-rating{display:flex;flex-wrap:wrap;align-items:center;gap:7px 10px;width:fit-content;max-width:100%;font:14px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;text-decoration:none;color:var(--muted);border-radius:9px}
+.primary-rating strong{font-family:'Newsreader',Georgia,serif;font-weight:500;font-size:27px;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums}
+.primary-rating .rating-source{color:var(--accent);font-weight:500}
+.primary-rating .rating-votes{font-size:12px;color:var(--muted)}
+a.primary-rating:hover .rating-source{text-decoration:underline;text-underline-offset:3px}
+.book-rating .book-meta{font-variant-numeric:tabular-nums}
+@media(max-width:640px){.primary-rating{gap:6px 8px}.detail-primary-rating{margin-bottom:18px}.rating-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.rcard{min-width:0}}

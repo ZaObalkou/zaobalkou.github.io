@@ -3,5 +3,5 @@
 window.MZR_CONFIG = {
   googleBooksApiKey: '',
   // Source-checked saved ratings; the UI labels snapshots separately from live data.
-  goodreadsRatingsUrl: 'goodreads-ratings.json?v=20260913-1'
+  goodreadsRatingsUrl: 'goodreads-ratings.json?v=20260913-2'
 };

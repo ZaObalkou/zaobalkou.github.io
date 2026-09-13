@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://www.goodreads.com; img-src https://i.gr-assets.com https://s.gr-assets.com; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+  <title>Goodreads rating</title>
+</head>
+<body>
+<!-- This page is only embedded with sandbox="allow-scripts". Goodreads' public
+     widget can write its normal markup here, without access to reader data. -->
+<script>
+(function(){
+  'use strict';
+  var query=new URLSearchParams(location.search),grId=query.get('grId')||'',nonce=query.get('nonce')||'';
+  if(window.parent===window||!/^[1-9]\d{0,14}$/.test(grId)||!/^[a-f0-9]{32}$/.test(nonce))return;
+  // A parser-inserted script preserves the widget's documented document.write
+  // behaviour. Only the numeric ID can vary; the script host and path are fixed.
+  document.write('<script src="https://www.goodreads.com/book/avg_rating_widget/'+grId+'"><\/script>');
+})();
+</script>
+<script>
+(function(){
+  'use strict';
+  var query=new URLSearchParams(location.search),grId=query.get('grId')||'',nonce=query.get('nonce')||'';
+  if(window.parent===window||!/^[1-9]\d{0,14}$/.test(grId)||!/^[a-f0-9]{32}$/.test(nonce))return;
+  var links=Array.from(document.querySelectorAll('a[href]')).filter(function(a){
+    try{var u=new URL(a.href);return u.protocol==='https:'&&u.hostname==='www.goodreads.com'&&new RegExp('^/book/show/'+grId+'(?:[.\\-/]|$)').test(u.pathname);}catch(e){return false;}
+  });
+  var link=links.find(function(a){return String(a.textContent||'').trim();})||links[0];
+  // Read rendered text only. Script source also contains words such as "rating"
+  // and is intentionally excluded from extraction.
+  var text=Array.from(document.body.childNodes).filter(function(n){return !/^(?:SCRIPT|STYLE)$/.test(n.nodeName);}).map(function(n){return n.textContent||'';}).join(' ');
+  var match=text.match(/Goodreads\s+rating:\s*([0-5](?:[.,]\d{1,3})?)\s*\(\s*([\d,\s\u00a0]+)\s+ratings?\s*\)/i);
+  var rating=match?Number(match[1].replace(',','.')):0,count=match?Number(match[2].replace(/[^\d]/g,'')):0;
+  var title=link&&(String(link.textContent||'').trim()||String(link.getAttribute('title')||'').trim());
+  if(!title&&link){var cover=link.querySelector('img');title=cover&&String(cover.getAttribute('alt')||'').trim();}
+  var payload={type:'za-goodreads-rating',grId:grId,nonce:nonce};
+  if(link&&title&&Number.isFinite(rating)&&rating>0&&rating<=5&&Number.isSafeInteger(count)&&count>0&&count<=1000000000){
+    payload.rating=rating;payload.count=count;payload.title=title.slice(0,500);payload.url='https://www.goodreads.com/book/show/'+grId;
+  }else payload.error='unavailable';
+  window.parent.postMessage(payload,'*');
+})();
+</script>
+</body>
+</html>

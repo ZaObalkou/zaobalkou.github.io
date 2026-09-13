@@ -9,6 +9,9 @@
   function year(v){var n=integer(v,9999);return n>=1000&&n<=new Date().getFullYear()?n:null;}
   function safeURL(v){try{var u=new URL(String(v));return u.protocol==='https:'&&!u.username&&!u.password&&u.href.length<=4096?u.href:'';}catch(e){return '';}}
   function goodreadsURL(v){var url=safeURL(v);if(!url)return '';var u=new URL(url);return /^(www\.)?goodreads\.com$/.test(u.hostname)&&/^\/book\/show\/\d+(?:[./\-]|$)/.test(u.pathname)?url:'';}
+  function goodreadsId(v){if(typeof v!=='string'&&typeof v!=='number')return '';var id=String(v).trim();return /^[1-9]\d{0,14}$/.test(id)?id:'';}
+  function olWorkKey(v){var match=typeof v==='string'&&v.match(/^(?:\/works\/|ol:)?(OL[1-9]\d{0,14}W)$/i);return match?match[1].toUpperCase():'';}
+  function goodreadsWorkIds(b){return olWorkKey(b.olWorkId)&&Array.isArray(b.grWorkIds)?unique(b.grWorkIds.map(goodreadsId)).slice(0,10):[];}
   function checkedAt(v){if(typeof v!=='string'||!/^\d{4}-\d{2}-\d{2}(?:T.*)?$/.test(v))return '';var t=Date.parse(v);return Number.isFinite(t)&&t<=Date.now()+86400000?new Date(t).toISOString():'';}
   function language(v){
     var n=String(v||'').toLowerCase().trim(),codes={eng:'en',cze:'cs',ces:'cs',slo:'sk',slk:'sk',ger:'de',deu:'de',fre:'fr',fra:'fr',spa:'es',ita:'it',pol:'pl',por:'pt',dut:'nl',nld:'nl',rus:'ru',ukr:'uk',swe:'sv',dan:'da',nor:'no',fin:'fi',hun:'hu',rum:'ro',ron:'ro',jpn:'ja',kor:'ko',chi:'zh',zho:'zh',ara:'ar',heb:'he',tur:'tr',gre:'el',ell:'el',hrv:'hr',srp:'sr',bul:'bg',slv:'sl',vie:'vi',tha:'th',ind:'id'};
@@ -107,14 +110,17 @@
     var science=subjects.map(norm).filter(function(s){return !umbrella.test(s);}).join(' | ');
     var found=TAG_RULES.filter(function(r){return r[1].test(r[0]==='sci-fi'?science:raw)||(r[2]&&r[2].test(r[0]==='sci-fi'?desc.replace(/(?:science fiction|sci fi)(?: and)? fantasy|fantasy(?: and)? (?:science fiction|sci fi)/g,''):desc));}).map(function(r){return r[0];});
     if(found.includes('romantasy')){if(!found.includes('romantika'))found.unshift('romantika');if(!found.includes('fantasy'))found.push('fantasy');}
-    if(found.includes('young adult'))found=found.filter(function(t){return t!=='dětské';});
+    if(found.includes('young adult')||found.includes('new adult'))found=found.filter(function(t){return t!=='dětské';});
     if(found.includes('hokej'))found=found.filter(function(t){return t!=='sport';});return unique(found).slice(0,12);
   }
   function matchesTags(b,terms){var tags=normalizeTags(b);return(terms||[]).every(function(t){var tag=canonicalTag(t);if(norm(t)==='romantasy')return tags.includes('romantasy')||(tags.includes('fantasy')&&tags.includes('romantika'));return !!tag&&tags.includes(tag);});}
-  function copyBook(b){var out={};Object.keys(b).forEach(function(k){if(!BAD_KEYS.includes(k)&&k!=='editions')out[k]=b[k];});return out;}
+  function copyBook(b){var out={};Object.keys(b).forEach(function(k){if(!BAD_KEYS.includes(k)&&k!=='editions')out[k]=b[k];});var workIds=goodreadsWorkIds(b);if(workIds.length)out.grWorkIds=workIds;else delete out.grWorkIds;if(goodreadsId(b.grId))out.grId=goodreadsId(b.grId);else delete out.grId;return out;}
   function mergePair(target,b){
+    var workIds=goodreadsWorkIds(target);
     ['pages','pageSource','coverUrl','coverUrlL','spineUrl','desc','link','isbn','language','firstPublishYear','year','yearKind','workId','olWorkId','olEditionId','series','seriesNumber','publisher','editionId','format','metadataSource'].forEach(function(k){if(!target[k]&&b[k])target[k]=b[k];});
     ['a','ol','g'].forEach(function(p){if(validRating(b[p+'Rating'])&&(!validRating(target[p+'Rating'])||integer(b[p+'Count'],1000000000)>integer(target[p+'Count'],1000000000))){target[p+'Rating']=b[p+'Rating'];target[p+'Count']=b[p+'Count'];}});
+    if(!goodreadsId(target.grId)&&goodreadsId(b.grId))target.grId=goodreadsId(b.grId);
+    if(olWorkKey(target.olWorkId)&&olWorkKey(target.olWorkId)===olWorkKey(b.olWorkId))workIds=unique(workIds.concat(goodreadsWorkIds(b))).slice(0,10);if(workIds.length)target.grWorkIds=workIds;else delete target.grWorkIds;
     if(hasGoodreads(b)&&(!hasGoodreads(target)||Date.parse(b.grCheckedAt)>Date.parse(target.grCheckedAt)))copyGoodreads(target,b);
     target.tags=unique(list(target.tags,100,200).concat(list(b.tags,100,200))).slice(0,100);
     target.aliases=unique(list(target.aliases).concat(list(b.aliases))).slice(0,20);target.authorAliases=unique(list(target.authorAliases).concat(list(b.authorAliases))).slice(0,20);
@@ -183,11 +189,13 @@
     if(typeof b.series==='string')out.series=b.series.slice(0,500);if(typeof b.seriesNumber==='number'&&Number.isFinite(b.seriesNumber)&&b.seriesNumber>=0&&b.seriesNumber<10000)out.seriesNumber=b.seriesNumber;else if(typeof b.seriesNumber==='string'&&/^\d{1,4}(?:[.,]\d{1,2})?$/.test(b.seriesNumber))out.seriesNumber=b.seriesNumber;
     out.metadataSources=(Array.isArray(b.metadataSources)?b.metadataSources:[]).slice(0,20).map(function(source){if(typeof source==='string')return safeURL(source);if(!source||typeof source!=='object'||!safeURL(source.url))return null;return{source:String(source.source||source.name||'').slice(0,100),url:safeURL(source.url),checkedAt:checkedAt(source.checkedAt)};}).filter(Boolean);
     ['a','ol','g'].forEach(function(p){out[p+'Rating']=validRating(b[p+'Rating'])?b[p+'Rating']:null;out[p+'Count']=integer(b[p+'Count'],1000000000);});
+    if(goodreadsId(b.grId))out.grId=goodreadsId(b.grId);
+    var workIds=goodreadsWorkIds(b);if(workIds.length)out.grWorkIds=workIds;
     if(hasGoodreads(b)){copyGoodreads(out,b);out.grCount=integer(b.grCount,1000000000);out.grUrl=goodreadsURL(b.grUrl);out.grCheckedAt=checkedAt(b.grCheckedAt);}return out;
   }
   function validateLibrary(raw){
     if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Neplatný formát knihovny.');var out=Object.create(null),ids=Object.keys(raw);if(ids.length>5000)throw new Error('Knihovna je příliš velká (maximum 5 000 knih).');
     ids.forEach(function(id){var e=raw[id];if(BAD_KEYS.includes(id)||!e||!['want','reading','read'].includes(e.status)||!e.book||typeof e.book.title!=='string'||!e.book.title.trim()||e.book.id!==id||!id||id.length>200)throw new Error('Záloha obsahuje neplatnou knihu.');var book=snapshot(e.book),pages=integer(e.pages==null?book.pages:e.pages),page=integer(e.page);if(pages)page=Math.min(page,pages);out[id]={status:e.status,page:e.status==='read'&&pages?pages:page,pages:pages,book:book};if(typeof e.pagesManual==='boolean')out[id].pagesManual=e.pagesManual;if(checkedAt(e.updatedAt))out[id].updatedAt=checkedAt(e.updatedAt);});return out;
   }
-  return{parseSearchInput:parseSearchInput,coverCandidates:coverCandidates,norm:norm,integer:integer,year:year,safeURL:safeURL,goodreadsURL:goodreadsURL,language:language,key:key,sameBook:sameBook,sameWork:sameWork,validRating:validRating,rating:rating,merge:merge,linkCatalogue:linkCatalogue,groupWorks:groupWorks,normalizeTags:normalizeTags,matchesTags:matchesTags,relevance:relevance,rank:rank,snapshot:snapshot,validateLibrary:validateLibrary};
+  return{parseSearchInput:parseSearchInput,coverCandidates:coverCandidates,norm:norm,integer:integer,year:year,safeURL:safeURL,goodreadsURL:goodreadsURL,goodreadsId:goodreadsId,language:language,key:key,sameBook:sameBook,sameWork:sameWork,validRating:validRating,rating:rating,merge:merge,linkCatalogue:linkCatalogue,groupWorks:groupWorks,normalizeTags:normalizeTags,matchesTags:matchesTags,relevance:relevance,rank:rank,snapshot:snapshot,validateLibrary:validateLibrary};
 });
