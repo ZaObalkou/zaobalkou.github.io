@@ -63,6 +63,31 @@ test('identical bilingual title with unknown language cannot inherit a Czech ISB
  assert.equal(Core.merge([[{...apple,title:'Provider title',author:'Neznámý autor',olEditionId:'OL123M'},{...seed,olEditionId:'OL123M'}]]).length,1);
  assert.equal(Core.sameBook({...apple,isbn:seed.isbn},seed),true);
 });
+test('verified author and series match groups Apple translator credits without merging editions',()=>{
+ const cs=book('seed-cs',{title:'Rival Darling',author:'Alexandra Moody',workId:'curated:rival-darling',verified:true,year:2026,isbn:'9788026742258',pages:352,series:'Darlingovic Ďáblové',seriesNumber:1});
+ const en={...cs,id:'seed-en',language:'en',year:2025,isbn:'9780063457423',pages:416,series:'The Darling Devils'};
+ const de=book('a:6744938843',{editionId:'a:6744938843',title:'Rival Darling',author:'Alexandra Moody & Stephanie Pannen',source:'Apple Books',year:2025,language:'',pages:0});
+ const fr=book('a:2',{editionId:'a:2',title:'Rival Darling (Darling Devils - tome 1)',author:'Alexandra Moody & Laurence Assuid',source:'Apple Books',year:2026,language:'fr',pages:0});
+ const editions=Core.linkCatalogue([de,fr],[cs,en]);
+ assert.equal(Core.groupWorks([cs,en,...editions]).length,1);
+ assert.equal(Core.groupWorks([cs,en,...editions])[0].editions.length,4);
+ assert.equal(editions[0].author,de.author);assert.equal(editions[0].language,'');assert.equal(editions[0].pages,0);assert.equal(editions[0].isbn,undefined);
+ assert.equal(editions[1].language,'fr');assert.equal(editions[1].pages,0);assert.equal(Core.sameBook(editions[0],en),false);
+ const englishStore={...editions[0],language:'en'};assert.equal(Core.sameBook(englishStore,en),false);
+ assert.equal(Core.sameBook({...englishStore,isbn:en.isbn},en),true);
+ assert.equal(Core.sameBook({...englishStore,id:'another',editionId:'a:3'},englishStore),false);
+});
+test('contributor matching rejects ambiguous works, author prefixes, anthologies and other series volumes',()=>{
+ const seed=book('seed',{title:'Rival Darling',author:'Alexandra Moody',workId:'curated:rival',verified:true,series:'The Darling Devils',seriesNumber:1});
+ const store=book('a:1',{editionId:'a:1',source:'Apple Books',title:'Rival Darling',author:'Alexandra Moody & Stephanie Pannen',language:''});
+ for(const changes of [{author:'Alexandra Moodyson & Stephanie Pannen'},{author:'Stephanie Pannen & Alexandra Moody'},{title:'Rival Darling (Darling Devils - tome 2)'},{title:'Rival Darling (Other Series - tome 1)'},{title:'Rival Darling / Truly Madly Deeply'},{source:'Unknown'}]){
+   const linked=Core.linkCatalogue([{...store,...changes}],[seed])[0];assert.equal(linked.workId,undefined);
+ }
+ assert.equal(Core.linkCatalogue([store],[{...seed,verified:false}])[0].workId,undefined);
+ assert.equal(Core.linkCatalogue([store],[seed,{...seed,id:'ambiguous',workId:'different-work'}])[0].workId,undefined);
+ // Matching a translator credit never creates an unanchored author alias.
+ assert.equal(Core.sameWork(store,seed),false);
+});
 test('a work-level original date never masquerades as a dated language edition',()=>{
  const work=book('olwork',{title:'House of Dragons',language:'',year:2020,yearKind:'original',workId:'dragon'});
  const edition=book('english',{title:'House of Dragons',language:'en',year:2022,yearKind:'edition',workId:'dragon',isbn:'9781234567891',pages:400});
@@ -93,6 +118,11 @@ test('tag discovery recognizes modern kingdom and dragon synonyms with AND seman
  assert(Core.matchesTags(modern,['kingdoms','drak']));assert.equal(Core.matchesTags(modern,['kingdoms','hockey']),false);
  const plain=book('p',{desc:'An ordinary family eats a royal breakfast.'});assert.equal(Core.matchesTags(plain,['kingdoms']),false);
  assert.equal(Core.normalizeTags(book('children',{tags:['Juvenile fiction']})).includes('young adult'),false);
+});
+test('known adult audience wins over conflicting juvenile catalogue taxonomy',()=>{
+ const tags=Core.normalizeTags(book('adult',{tags:['romantasy','new adult','Juvenile Fiction / Fantasy']}));
+ assert(tags.includes('new adult'));assert(tags.includes('fantasy'));assert.equal(tags.includes('dětské'),false);
+ assert(Core.normalizeTags(book('children',{tags:['Juvenile Fiction / Fantasy']})).includes('dětské'));
 });
 test('a combined science-fiction-and-fantasy category does not turn fantasy into sci-fi',()=>{
  for(const category of ['Science Fiction & Fantasy','Science Fiction, Fantasy, & Magic','Science fiction, fantasy, horror','Fantasy and Science Fiction']){
@@ -132,6 +162,51 @@ test('saved Goodreads provenance survives snapshots and is replaced with newer m
  const snapshot=Core.snapshot(saved);assert.equal(snapshot.grSnapshot,true);assert.equal(snapshot.grScope,'work');assert.equal(Core.rating(snapshot).snapshot,true);
  const newer={...saved,grRating:4.5,grCheckedAt:'2026-09-13',grScope:'edition',grSnapshot:false};
  const merged=Core.merge([[saved],[newer]])[0];assert.equal(merged.grSnapshot,false);assert.equal(merged.grScope,'edition');assert.equal(merged.grRating,4.5);
+});
+test('Goodreads identifiers survive without cached ratings and accept only positive numeric book IDs',()=>{
+ for(const [value,expected] of [['61431922','61431922'],[61431922,'61431922'],[' 61431922 ','61431922'],['999999999999999','999999999999999']]){
+  assert.equal(Core.goodreadsId(value),expected);
+  const saved=Core.snapshot(book('gr-id',{grId:value}));
+  assert.equal(saved.grId,expected);assert.equal(saved.grRating,undefined);assert.equal(saved.grScope,undefined);
+ }
+ for(const value of ['',0,-1,'0','01','1e3','1.5',1.5,Infinity,{},['123'],'1000000000000000','123/../1','https://www.goodreads.com/book/show/123','javascript:alert(1)']){
+  assert.equal(Core.goodreadsId(value),'');assert.equal(Core.snapshot(book('bad-id',{grId:value})).grId,undefined);
+ }
+});
+test('Goodreads identifiers merge only with the selected edition and never follow work ratings',()=>{
+ const cs=book('cs',{workId:'work:wing',isbn:'9781234567890',grId:'111'});
+ const en=book('en',{workId:'work:wing',isbn:'9781234567891',language:'en',grId:'222',grRating:4.56,grCount:3808364,grUrl:'https://www.goodreads.com/book/show/222',grCheckedAt:'2026-09-13',grScope:'work'});
+ const merged=Core.merge([[{...cs,grId:undefined}],[{...cs,id:'cs-provider',grId:111}]])[0];
+ assert.equal(merged.grId,'111');
+ const grouped=Core.groupWorks([cs,en],{language:'cs'})[0];
+ assert.equal(grouped.grId,'111');assert.equal(grouped.grRating,4.56);
+ assert.equal(grouped.editions.find(e=>e.id==='en').grId,'222');
+ assert.equal(Core.groupWorks([{...cs,grId:undefined},en],{language:'cs'})[0].grId,undefined);
+ assert.equal(Core.linkCatalogue([{...cs,grId:undefined}],[en])[0].grId,undefined);
+ assert.equal(Core.merge([[cs],[{...cs,id:'another-source',grId:'333'}]])[0].grId,'111');
+});
+test('Goodreads work candidates require an Open Library work anchor and remain bounded numeric IDs',()=>{
+ const candidate=book('work-candidate',{olWorkId:'/works/OL123W',grWorkIds:['123',123,' 456 ',0,'0','https://goodreads.com/book/show/4','1000000000000000',...Array.from({length:15},(_,i)=>i+1000)]});
+ const saved=Core.snapshot(candidate);
+ assert.deepEqual(saved.grWorkIds,['123','456','1000','1001','1002','1003','1004','1005','1006','1007']);
+ assert.equal(saved.grId,undefined);assert.equal(saved.grRating,undefined);
+ for(const olWorkId of [undefined,'','curated:wing','https://evil.example/OL123W','/books/OL123M','/works/OL0W']){
+  assert.equal(Core.snapshot({...candidate,olWorkId}).grWorkIds,undefined);
+  assert.equal(Core.merge([[{...candidate,olWorkId}]])[0].grWorkIds,undefined);
+ }
+ for(const olWorkId of ['/works/OL123W','ol:OL123W','OL123W'])assert.deepEqual(Core.snapshot({...candidate,olWorkId,grWorkIds:[123]}).grWorkIds,['123']);
+});
+test('Goodreads work candidates merge only when their anchored Open Library works agree',()=>{
+ const first=book('first',{isbn:'9781234567890',olWorkId:'/works/OL123W',grWorkIds:['111']});
+ const matching={...first,id:'second',olWorkId:'OL123W',grWorkIds:['111','222']};
+ assert.deepEqual(Core.merge([[first],[matching]])[0].grWorkIds,['111','222']);
+ const conflicting={...matching,olWorkId:'/works/OL999W',grWorkIds:['999']};
+ assert.deepEqual(Core.merge([[first],[conflicting]])[0].grWorkIds,['111']);
+ const noAnchor={...first,olWorkId:undefined,grWorkIds:['555']};
+ assert.deepEqual(Core.merge([[noAnchor],[matching]])[0].grWorkIds,['111','222']);
+ const translation={...first,id:'translated',isbn:'9781234567891',language:'en',grWorkIds:undefined};
+ assert.equal(Core.groupWorks([first,translation],{language:'en'})[0].grWorkIds,undefined);
+ assert.equal(first.grWorkIds.length,1);
 });
 test('unsafe input cannot poison prototypes, URLs or persistence metadata',()=>{
  const poison=JSON.parse('{"id":"x","title":"X","author":"A","__proto__":{"polluted":true},"link":"javascript:alert(1)","metadataSources":[{"url":"data:text/html,hi"}],"aliases":["safe",{"bad":1}]}');

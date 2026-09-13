@@ -121,10 +121,10 @@ test('working catalogues remain usable after an Apple outage and Google is opt-i
   const seen=[];
   const a=boot({config:{googleBooksApiKey:'test-key'},fetcher:url=>{seen.push(url);return url.includes('itunes')?Promise.reject(new Error('offline')):providerMock(url);}});await flush();
   a.query('Dračí akademie');await flush();
-  assert.equal(a.api.state.results[0].title,'Dračí akademie');assert.equal(a.api.state.offlineSearch,false);assert.equal(a.api.state.searchFailed,1);
+  assert.equal(a.api.state.results[0].title,'Dračí akademie');assert.equal(a.api.state.offlineSearch,false);assert.equal(a.api.state.searchIssues.length,1);
   assert.match(a.main(),/Dostupnost katalogů/);assert.doesNotMatch(a.main(),/Část katalogů se nepodařilo/);
   const noKey=[];const b=boot({fetcher:url=>{noKey.push(url);return emptyProvider(url);}});await flush();b.query('Zkouška');await flush();
-  assert(!noKey.some(url=>url.includes('googleapis')));assert.equal(b.api.state.searchFailed,0);
+  assert(!noKey.some(url=>url.includes('googleapis')));assert.equal(b.api.state.searchIssues.length,0);
 });
 test('successful empty responses are empty results, not an offline error',async()=>{
   const a=boot({fetcher:emptyProvider});await flush();a.query('zzzz-neexistuje');await flush();
@@ -216,7 +216,10 @@ test('early ratings render before edition metadata and cannot replace a later op
  a.window.CatalogueClient.detail=(b,onProgress)=>{callbacks.push(onProgress);return new Promise(resolve=>finish.push(()=>resolve(b)));};
  a.api.openBook(CS_DRAGONS);
  const rated={...a.api.state.detail,grRating:4.2,grCount:12345,grUrl:'https://www.goodreads.com/book/show/123-title',grCheckedAt:'2026-09-13',grScope:'work',grSnapshot:true};
- callbacks[0](rated);assert.equal(a.api.state.detailLoading,true);assert.match(a.main(),/Goodreads/);assert.match(a.main(),/Uložené hodnocení/);
+ const beforeProgress=a.main();callbacks[0](rated);assert.equal(a.api.state.detailLoading,true);
+ assert.match(a.doc.getElementById('detailRatings').innerHTML,/Uložené hodnocení/);
+ assert.match(a.doc.getElementById('detailPrimaryRating').innerHTML,/Goodreads/);
+ assert.equal(a.main(),beforeProgress,'rating progress updates only its containers, preserving active edition and progress controls');
  a.api.openBook(EN_DRAGONS);callbacks[0](rated);
  assert.equal(a.api.state.detail.id,EN_DRAGONS);assert.equal(a.api.state.detail.language,'en');
  a.api.goLibrary();callbacks[1]({...rated,id:EN_DRAGONS});assert.equal(a.api.state.view,'library');assert.match(a.main(),/Moje knihovna/);

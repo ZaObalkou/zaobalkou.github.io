@@ -7,6 +7,7 @@ const json=value=>Promise.resolve({ok:true,status:200,json:()=>Promise.resolve(v
 function create(fetch,extra={}){return Client.create(Object.assign({core:Core,fetch,config:{},data:{books:[]},storage:null,requestGap:0,timeout:100},extra));}
 function deferred(){let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};}
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
+const liveScore=(book,extra={})=>Object.assign({},book,{grRating:4.6,grCount:4000000,grUrl:'https://www.goodreads.com/book/show/'+(book.grId||'123'),grCheckedAt:'2026-09-13T10:00:00.000Z',grScope:'work',grSnapshot:false},extra);
 const edition={id:'/books/OL100M',editionId:'/books/OL100M',olEditionId:'/books/OL100M',olWorkId:'/works/OL100W',workId:'/works/OL100W',title:'A Book',author:'An Author',language:'en',year:2025,yearKind:'edition',isbn:'9780000000001',pages:0,tags:['fantasy']};
 
 test('Apple storefront is never treated as book language',()=>{
@@ -36,6 +37,16 @@ test('Exact ISBN enrichment attaches pages only to its own edition',async()=>{
   const client=create(()=>json({'ISBN:9780000000001':{details:{key:'/books/OL100M',number_of_pages:416,publish_date:'June 2025',languages:[{key:'/languages/eng'}],isbn_13:['9780000000001']}}}));
   const books=await client._test.enrichBatch([edition,Object.assign({},edition,{id:'seed:cs',isbn:'9780000000002',language:'cs',pages:352})]);
   assert.equal(books[0].pages,416);assert.equal(books[0].language,'en');assert.equal(books[1].pages,352);assert.equal(books[1].language,'cs');
+});
+test('exact edition pagination fills missing page count without inventing totals from ranges or volumes',()=>{
+  const client=create(()=>json({}));
+  for(const pagination of ['384','384 p.','384 pages','384 stran','384 s.']){
+    const result=client._test.editionMetadata(edition,{key:edition.id,pagination});
+    assert.equal(result.pages,384);assert.match(result.pageSource,/konkrétní vydání/);
+  }
+  for(const pagination of ['xii, 384 p.','[384]','2 volumes','pp. 100-384','384, 56 pages','384.5','384000'])assert.equal(client._test.editionMetadata(edition,{key:edition.id,pagination}).pages,0);
+  assert.equal(client._test.editionMetadata(edition,{key:edition.id,pagination:'384',number_of_pages:400}).pages,400);
+  assert.equal(client._test.editionMetadata({...edition,verified:true,pages:416},{key:edition.id,pagination:'384'}).pages,416);
 });
 
 test('Network failures remain explicit and identical inflight requests coalesce',async()=>{
@@ -242,4 +253,165 @@ test('Default Open Library requests and queue expire at 25 seconds while other p
   assert.equal(statuses.length,1);assert.match(statuses[0],/^Apple:/);assert.equal(calls.filter(url=>url.includes('openlibrary')).length,2);
   t.mock.timers.tick(16500);await flush();await Promise.all(jobs);
   assert.equal(statuses.filter(s=>s.startsWith('OL:')).length,3);assert.ok(statuses.some(s=>s.includes('čeká na dokončení')),'a waiting request has a bounded queue deadline');
+});
+
+test('Goodreads IDs from Open Library remain tied to the edition or explicit work candidates',()=>{
+  const client=create(()=>json({}));
+  const exact=client._test.editionMetadata(edition,{key:edition.id,identifiers:{goodreads:[' 123 ','123']}});
+  assert.equal(exact.grId,'123');
+  for(const ids of [['123','456'],['https://www.goodreads.com/book/show/123'],['0'],[12.5],[{}]])assert.ok(!client._test.editionMetadata(edition,{key:edition.id,identifiers:{goodreads:ids}}).grId);
+  const existing=client._test.editionMetadata(Object.assign({},edition,{grId:'999'}),{key:edition.id,identifiers:{goodreads:['123']}});assert.equal(existing.grId,'999');
+  const mapped=client._test.mapOL({key:edition.olWorkId,title:edition.title,author_name:[edition.author],id_goodreads:['300','400','bad'],editions:{docs:[{key:edition.id,title:edition.title,language:['eng'],id_goodreads:['500']}]}})[0];
+  assert.equal(mapped.grId,'500');assert.deepEqual(mapped.grWorkIds,['300','400']);
+  const work=client._test.mapOL({key:edition.olWorkId,title:edition.title,id_goodreads:['300','400']})[0];assert.ok(!work.grId);assert.deepEqual(work.grWorkIds,['300','400']);
+});
+
+test('Live Goodreads starts before metadata and a failed provider keeps the known rating',async()=>{
+  const metadata=deferred(),calls=[],updates=[],book=Object.assign({},edition,{grId:'123'});
+  const client=create(url=>{calls.push('metadata');if(url.includes('/api/books?'))return metadata.promise.then(json);if(url.includes('search.json'))return json({docs:[]});if(url.includes('/editions.json'))return json({size:0,entries:[]});return json({});},{timeout:1000,goodreads:{getCached:b=>b,rating:b=>{calls.push('Goodreads');return Promise.resolve(liveScore(b));}}});
+  const pending=client.detail(book,b=>updates.push(b));await flush();
+  assert.equal(calls[0],'Goodreads');assert.ok(updates.some(b=>b.grCount===4000000&&b.id===book.id));
+  metadata.resolve({'ISBN:9780000000001':{details:{key:edition.id,number_of_pages:416,publish_date:'2025',languages:[{key:'/languages/eng'}]}}});
+  const result=await pending;assert.equal(result.pages,416);assert.equal(result.grCount,4000000);
+  const fallback=liveScore(book,{grSnapshot:true});const failed=create(()=>json({}),{goodreads:{getCached:b=>b,rating:()=>Promise.reject(new Error('offline'))}});
+  assert.equal((await failed.refreshRatings(fallback)).grCount,4000000);assert.equal((await failed.refreshRatings(fallback)).grSnapshot,true);
+});
+
+test('Complete detail discovers its Goodreads ID through edition metadata and publishes without waiting for editions',async()=>{
+  const metadata=deferred(),editions=deferred(),work=deferred(),calls=[],updates=[];
+  const book=Object.assign({},edition,{pages:320,olRating:4,olCount:38,verified:true});
+  const client=create(url=>{calls.push(url);if(url.includes('/api/books?'))return metadata.promise.then(json);if(url.includes('/editions.json'))return editions.promise.then(json);return work.promise.then(json);},{timeout:1000,goodreads:{getCached:b=>b,rating:b=>{calls.push('widget:'+b.grId);return Promise.resolve(liveScore(b));}}});
+  let finished=false;const pending=client.detail(book,b=>updates.push(b)).then(b=>{finished=true;return b;});await flush();
+  assert.ok(calls.some(url=>url.includes('/api/books?')),'complete metadata is still checked for a missing rating crosswalk');
+  metadata.resolve({'ISBN:9780000000001':{details:{key:edition.id,identifiers:{goodreads:['123']},number_of_pages:999,publish_date:'2000',languages:[{key:'/languages/eng'}]}}});await flush();
+  assert.equal(finished,false);assert.ok(calls.includes('widget:123'));assert.ok(updates.some(b=>b.grCount===4000000));
+  assert.ok(updates.every(b=>b.id===book.id&&b.pages===320&&b.year===2025),'publisher-confirmed edition metadata remains intact');
+  work.resolve({});editions.resolve({size:1,entries:[{key:'/books/OL101M',title:'Kniha',languages:[{key:'/languages/cze'}],publish_date:'2026',number_of_pages:352}]});
+  const result=await pending;assert.equal(result.grId,'123');assert.ok(!result.editions.find(b=>b.id==='/books/OL101M').grId,'new editions cannot inherit the selected edition Goodreads ID');
+});
+
+test('Search uses only cached live ratings and does not wait for individual widgets',async()=>{
+  let liveCalls=0;const book=Object.assign({},edition,{pages:320,grId:'123'});
+  const client=create(url=>json(url.includes('search.json')?{docs:[]}:{results:[]}),{data:{books:[book]},goodreads:{getCached:b=>liveScore(b),rating:()=>{liveCalls++;return new Promise(()=>{});}}});
+  const result=await client.search('A Book',{});assert.equal(result.books[0].grCount,4000000);assert.equal(liveCalls,0);
+});
+
+test('Fresh live cache wins over the historical feed and background refresh never requests catalogue metadata',async()=>{
+  const book=Object.assign({},edition,{pages:320,grId:'123'}),calls=[],priorities=[];
+  const client=create(url=>{calls.push(url);return json({ratings:[{isbn:book.isbn,rating:4.2,count:3800000,url:'https://www.goodreads.com/book/show/123',checkedAt:'2026-09-12',scope:'work',snapshot:true}]});},{origin:'https://zaobalkou.github.io',config:{goodreadsRatingsUrl:'/ratings.json'},goodreads:{getCached:b=>liveScore(b),rating:(b,options)=>{priorities.push(options.priority);return Promise.resolve(liveScore(b));}}});
+  const result=await client.refreshRatings(book,{priority:false});
+  assert.equal(result.grCount,4000000);assert.equal(result.grSnapshot,false);assert.deepEqual(priorities,[false]);assert.equal(calls.length,1);assert.ok(calls[0].endsWith('/ratings.json'));
+  const cached=client.getCachedRatings(book);assert.equal(cached.grCount,4000000);assert.equal(cached.grSnapshot,false);assert.equal(calls.length,1);
+});
+
+test('Related editions can supply work ratings without transferring their Goodreads ID or page metadata',async()=>{
+  const cs=Object.assign({},edition,{id:'seed:cs',isbn:'9780000000002',language:'cs',pages:352,year:2026}),en=Object.assign({},edition,{grId:'123',pages:416});cs.editions=[en];
+  const client=create(()=>{throw new Error('unexpected catalogue request');},{goodreads:{getCached:b=>b,rating:b=>Promise.resolve(liveScore(b))}});
+  const result=await client.refreshRatings(cs);assert.equal(result.grCount,4000000);assert.equal(result.id,cs.id);assert.equal(result.language,'cs');assert.equal(result.pages,352);assert.ok(!result.grId);
+  const editionOnly=create(()=>json({}),{goodreads:{getCached:b=>b,rating:b=>Promise.resolve(liveScore(b,{grScope:'edition'}))}});
+  assert.ok(!(await editionOnly.refreshRatings(cs)).grRating);
+  const wrongBook=create(()=>json({}),{goodreads:{getCached:b=>b,rating:b=>Promise.resolve(liveScore(b,{id:'another-book',isbn:'9780000000999'}))}});
+  assert.ok(!(await wrongBook.refreshRatings(cs)).grRating);
+});
+
+test('Registry ISBNs are edition-specific and work candidates require title verification without fabricating a rating',async()=>{
+  const requested=[],book=Object.assign({},edition,{pages:320}),provider={getCached:b=>b,rating:b=>{requested.push(b);return Promise.resolve(b);}};
+  const registered=create(()=>json({}),{goodreads:provider,goodreadsCatalogue:{byIsbn:{[book.isbn]:{id:'123'}},byWorkId:{[book.workId]:{id:'999',url:'https://www.goodreads.com/book/show/999'}}}});
+  assert.equal(registered.getCachedRatings(book).grId,'123');await registered.refreshRatings(book);assert.equal(requested[0].grId,'123');
+  const generic=create(()=>json({}),{goodreads:provider});
+  const candidate=Object.assign({},book,{grWorkIds:['300'],grRating:4.9,grCount:1234,grCheckedAt:'2026-09-13',grScope:'work'});
+  const result=await generic.refreshRatings(candidate),request=requested.at(-1);
+  assert.equal(request.grUrl,'https://www.goodreads.com/book/show/300');assert.equal(request.grMatchTitle,true);assert.ok(!request.grId);assert.ok(!request.grRating,'a new candidate URL cannot reuse a pre-existing score');
+  assert.ok(!Core.rating(result),'a rejected/unmatched widget cannot turn unverified fields into a Goodreads rating');
+});
+
+test('A Goodreads work candidate discovered by title lookup publishes for the selected edition before the work finishes',async()=>{
+  const work=deferred(),editions=deferred(),updates=[],requested=[];
+  const book=Object.assign({},edition,{pages:320});
+  const client=create(url=>{
+    if(url.includes('/api/books?'))return json({});
+    if(url.includes('search.json'))return json({docs:[{key:edition.olWorkId,title:edition.title,author_name:[edition.author],id_goodreads:['123','456'],ratings_average:4,ratings_count:38}]});
+    if(url.includes('/editions.json'))return editions.promise.then(json);
+    return work.promise.then(json);
+  },{timeout:1000,goodreads:{getCached:b=>b,rating:b=>{requested.push(b);return Promise.resolve(liveScore(b));}}});
+  let finished=false;const pending=client.detail(book,b=>updates.push(b)).then(b=>{finished=true;return b;});await flush();
+  assert.equal(finished,false);assert.equal(requested.length,1);assert.equal(requested[0].grMatchTitle,true);assert.equal(requested[0].grUrl,'https://www.goodreads.com/book/show/123');
+  assert.ok(updates.some(b=>b.grCount===4000000&&b.id===book.id&&b.pages===320));assert.ok(updates.every(b=>!b.grId));
+  work.resolve({});editions.resolve({size:0,entries:[]});const result=await pending;
+  assert.equal(result.id,book.id);assert.equal(result.grCount,4000000);assert.equal(result.pages,320);assert.ok(!result.grId);
+});
+
+const resolverURL='https://ratings.example/api/goodreads';
+const resolverRow=(book,extra={})=>({isbn:book.isbn,id:'123',title:book.title,url:'https://www.goodreads.com/book/show/123',checkedAt:new Date().toISOString(),rating:4.12,count:1678200,...extra});
+function emptyMetadata(url){return json(url.includes('search.json')?{docs:[]}:url.includes('/editions.json')?{entries:[],size:0}:{});}
+
+test('generic ISBN resolver supplies live Goodreads before slow edition metadata and caches identity',async()=>{
+  const metadata=deferred(),updates=[],calls=[],book={...edition,pages:384,title:'Book Lovers',author:'Emily Henry',isbn:'9780593334836',olRating:4,olCount:12};
+  const client=create(url=>{calls.push(url);if(url.startsWith(resolverURL))return json(resolverRow(book));if(url.includes('/api/books?'))return metadata.promise.then(json);return emptyMetadata(url);},{timeout:1000,config:{goodreadsResolverUrl:resolverURL},goodreads:{getCached:b=>b,rating:b=>Promise.resolve(b)}});
+  let finished=false;const pending=client.detail(book,b=>updates.push(b)).then(b=>{finished=true;return b;});await flush();
+  assert.equal(finished,false);assert.ok(updates.some(b=>b.grCount===1678200&&b.grId==='123'));
+  const before=calls.length,cached=client.getCachedRatings(book);assert.equal(cached.grRating,4.12);assert.equal(cached.grSnapshot,false);assert.equal(calls.length,before);
+  metadata.resolve({});const result=await pending;assert.equal(result.grCount,1678200);assert.equal(result.pages,384);assert.equal(result.isbn,book.isbn);
+  assert.equal(calls.filter(url=>url.startsWith(resolverURL)).length,1);assert.equal(new URL(calls.find(url=>url.startsWith(resolverURL))).searchParams.get('isbn'),book.isbn);
+});
+
+test('resolver verifies ISBN, complete title and canonical Goodreads ID before accepting data',async()=>{
+  const book={...edition,pages:320,olRating:4,olCount:12};
+  for(const change of [{isbn:'9780000000099'},{title:'A Book Coloring Book'},{title:'A Book (Special Edition)'},{url:'https://evil.example/book/show/123'},{url:'https://www.goodreads.com:444/book/show/123'},{url:'https://www.goodreads.com/book/show/999'},{id:'123<script>'}]){
+    const client=create(url=>url.startsWith(resolverURL)?json(resolverRow(book,change)):emptyMetadata(url),{config:{goodreadsResolverUrl:resolverURL}});
+    const result=await client.detail(book);assert.ok(!result.grId);assert.ok(!result.grRating);assert.equal(Core.rating(result).source,'Open Library');
+  }
+});
+
+test('resolver may use an identified sibling edition without copying its ISBN, language, pages or Goodreads ID',async()=>{
+  const sibling={...edition,pages:416,language:'en'},book={...edition,id:'seed:cs',editionId:'',olEditionId:'',isbn:'',title:'Kniha',aliases:['A Book'],language:'cs',pages:352,olRating:4,olCount:12};book.editions=[sibling];
+  const client=create(url=>url.startsWith(resolverURL)?json(resolverRow(sibling)):emptyMetadata(url),{config:{goodreadsResolverUrl:resolverURL}});
+  const result=await client.detail(book);assert.equal(result.grCount,1678200);assert.ok(!result.grId);assert.equal(result.isbn,'');assert.equal(result.language,'cs');assert.equal(result.pages,352);
+  assert.equal(result.editions.find(b=>b.isbn===sibling.isbn).grId,'123');
+});
+
+test('generic resolver failures are bounded to three distinct ISBNs and preserve fallback',async()=>{
+  const calls=[],book={...edition,pages:320,olRating:4,olCount:12};book.editions=Array.from({length:7},(_,i)=>({...edition,id:'edition:'+i,isbn:'978000000001'+i,pages:350}));
+  const client=create(url=>{if(url.startsWith(resolverURL)){calls.push(url);return Promise.reject(new Error('unavailable'));}return emptyMetadata(url);},{config:{goodreadsResolverUrl:resolverURL}});
+  const result=await client.detail(book);assert.equal(calls.length,3);assert.equal(new Set(calls).size,3);assert.equal(result.olRating,4);assert.ok(!result.grRating);
+});
+
+test('ISBN discovered with work editions starts the resolver even when the selected store record has no ISBN',async()=>{
+  const book={...edition,id:'a:1',editionId:'a:1',olEditionId:'',isbn:'',language:'',pages:0,olRating:4,olCount:12},calls=[];
+  const client=create(url=>{
+    if(url.startsWith(resolverURL)){calls.push(url);return json(resolverRow({...edition,isbn:'9780593334836'}));}
+    if(url.includes('/editions.json'))return json({entries:[{key:'/books/OL101M',title:book.title,languages:[{key:'/languages/eng'}],isbn_13:['9780593334836'],pagination:'384',publish_date:'2022'}],size:1});
+    return emptyMetadata(url);
+  },{config:{goodreadsResolverUrl:resolverURL}});
+  const result=await client.detail(book);assert.equal(calls.length,1);assert.equal(result.grCount,1678200);assert.ok(!result.grId);assert.equal(result.pages,0);
+  const identified=result.editions.find(b=>b.isbn==='9780593334836');assert.equal(identified.grId,'123');assert.equal(identified.pages,384);
+});
+
+test('a rejected OL Goodreads ID falls back to verified ISBN resolution and awaits the replacement widget',async()=>{
+  const replacement=deferred(),requested=[],book={...edition,pages:320,grWorkIds:['999'],olRating:4,olCount:12};
+  const client=create(url=>url.startsWith(resolverURL)?json(resolverRow(book,{rating:undefined,count:undefined})):emptyMetadata(url),{timeout:1000,config:{goodreadsResolverUrl:resolverURL},goodreads:{getCached:b=>b,rating:b=>{requested.push(b.grId||b.grUrl);return b.grId==='123'?replacement.promise.then(()=>liveScore(b)):Promise.resolve(b);}}});
+  let finished=false;const pending=client.detail(book).then(b=>{finished=true;return b;});await flush();
+  assert.deepEqual(requested,['https://www.goodreads.com/book/show/999','123']);assert.equal(finished,false);
+  replacement.resolve();const result=await pending;assert.equal(result.grId,'123');assert.equal(result.grCount,4000000);assert.equal(result.pages,320);
+});
+
+test('fresh resolver aggregates avoid a second upstream widget request',async()=>{
+  let widgetCalls=0;const book={...edition,pages:320,olRating:4,olCount:12};
+  const client=create(url=>url.startsWith(resolverURL)?json(resolverRow(book)):emptyMetadata(url),{config:{goodreadsResolverUrl:resolverURL},goodreads:{getCached:b=>b,rating:b=>{widgetCalls++;return Promise.resolve(b);}}});
+  assert.equal((await client.detail(book)).grCount,1678200);assert.equal(widgetCalls,0);
+});
+
+test('a corrected exact Goodreads identity survives later metadata and replaces the stale identifier on reopen',async()=>{
+  const metadata=deferred(),book={...edition,pages:320,grId:'999',olRating:4,olCount:12};
+  const client=create(url=>url.startsWith(resolverURL)?json(resolverRow(book)):url.includes('/api/books?')?metadata.promise.then(json):emptyMetadata(url),{timeout:1000,config:{goodreadsResolverUrl:resolverURL},goodreads:{getCached:b=>b,rating:b=>Promise.resolve(b)}});
+  const pending=client.detail(book);await flush();assert.equal(client.getCachedRatings(book).grId,'123');
+  metadata.resolve({});const result=await pending;assert.equal(result.grId,'123');assert.equal(result.grUrl,'https://www.goodreads.com/book/show/123');assert.equal(result.grCount,1678200);
+});
+
+test('cold Goodreads identity requests have enough time for two bounded upstream calls',async t=>{
+  t.mock.timers.enable({apis:['setTimeout']});let failed=false;
+  const client=Client.create({core:Core,storage:null,fetch:()=>new Promise(()=>{})});
+  const pending=client._test.request(resolverURL+'?isbn='+edition.isbn,'Goodreads identity').catch(()=>{failed=true;});await flush();
+  t.mock.timers.tick(8500);await flush();assert.equal(failed,false);
+  t.mock.timers.tick(19500);await pending;assert.equal(failed,true);
 });

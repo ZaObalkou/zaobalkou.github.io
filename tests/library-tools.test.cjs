@@ -26,9 +26,9 @@ test('book links preserve Unicode, metadata, and selected language; unrelated fr
   assert.equal(Tools.parseBookFragment('#other'),null);
 });
 test('public book URLs cannot assert fabricated provider ratings or source verification',()=>{
-  const payload={v:1,b:['fake','Kniha','Autor',null,'en',2025,200,null,null,null,null,null,2025,'edition',[],4.8,10,4.7,20,4.6,30,4.9,100,'https://www.goodreads.com/book/show/123','2026-09-10','Invented publisher']};
+  const payload={v:1,b:['fake','Kniha','Autor',null,'en',2025,200,null,null,null,null,null,2025,'edition',[],4.8,10,4.7,20,4.6,30,4.9,100,'https://www.goodreads.com/book/show/123','2026-09-10','Invented publisher',null,'work',true,'123',['123'],'/works/OL123W']};
   const book=Tools.parseBookFragment('#book='+Buffer.from(JSON.stringify(payload)).toString('base64url'));
-  for(const field of ['aRating','aCount','olRating','olCount','gRating','gCount','grRating','grCount','grUrl','grCheckedAt','verified','verifiedAt','source','pageSource'])assert.equal(field in book,false);
+  for(const field of ['aRating','aCount','olRating','olCount','gRating','gCount','grRating','grCount','grUrl','grCheckedAt','grId','grWorkIds','grScope','grSnapshot','verified','verifiedAt','source','pageSource'])assert.equal(field in book,false);
   const original=example('real');Object.assign(original,{gRating:4.5,gCount:25});
   const url=Tools.bookLink(original);const packed=JSON.parse(Buffer.from(new URL(url).hash.slice(6),'base64url').toString());
   assert.equal(packed.b.length,15);
@@ -71,6 +71,24 @@ test('library transfer retains the complete Goodreads source metadata needed by 
   assert.equal(restored['cs-edition'].book.grCheckedAt,'2026-09-10T00:00:00.000Z');
   assert.equal(restored['cs-edition'].book.grScope,'work');
   assert.equal(restored['cs-edition'].book.grSnapshot,true);
+});
+test('new transfers retain edition-specific Goodreads IDs and old payload positions remain compatible',async()=>{
+  const input=library();Object.assign(input['cs-edition'].book,{grId:'61431922',grWorkIds:['111','222'],olWorkId:'/works/OL123W'});
+  const transfer=await Tools.transferLink(input);const restored=await Tools.parseLibraryFragment(new URL(transfer.url).hash);
+  assert.equal(restored['cs-edition'].book.grId,'61431922');assert.equal(restored['cs-edition'].book.grRating,undefined);
+  assert.equal(restored['en-edition'].book.grId,undefined);
+  assert.deepEqual(restored['cs-edition'].book.grWorkIds,['111','222']);assert.equal(restored['cs-edition'].book.olWorkId,'/works/OL123W');
+  const oldBook=['old','Starší přenos','Autor',null,'cs',2024,200,'Série',1,null,null,null,null,'edition',[],null,null,null,null,null,null,4.5,123,'https://www.goodreads.com/book/show/123','2026-09-10','Vydavatel',null,'work',true];
+  const old=await Tools.parseLibraryFragment(envelope({v:1,k:'zaobalkou-library',b:[[oldBook,'reading',20,200,true]]}));
+  assert.equal(old.old.book.grId,undefined);assert.equal(old.old.book.grScope,'work');assert.equal(old.old.book.grSnapshot,true);
+  assert.equal(old.old.book.pageSource,'Vydavatel');assert.equal(old.old.page,20);assert.equal(old.old.pagesManual,true);
+});
+test('series prequels numbered zero survive book links and library transfers',async()=>{
+  const input=library();input['cs-edition'].book.seriesNumber=0;
+  assert.equal(Tools.parseBookFragment(new URL(Tools.bookLink(input['cs-edition'].book)).hash).seriesNumber,0);
+  const transfer=await Tools.transferLink(input);const restored=await Tools.parseLibraryFragment(new URL(transfer.url).hash);
+  assert.equal(restored['cs-edition'].book.seriesNumber,0);
+  assert.equal(Tools.seriesLabel(restored['cs-edition'].book),'Království & křídla · 0. díl');
 });
 test('uncompressed links also import and completed progress is clamped',async()=>{
   const raw={v:1,k:'zaobalkou-library',b:[[['one','Kniha','Autor',null,'en',2025,200],'read',900,200]]};
