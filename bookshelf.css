@@ -1,12 +1,12 @@
 /* Stable spine hit areas; decorative previews never intercept adjacent books. */
 .bookshelf{--shelf-preview-width:174px;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;padding:0 0 6px;scrollbar-width:thin;scrollbar-color:rgba(var(--accent-rgb),.4) transparent;border-radius:12px}
 .bookshelf:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-.bookshelf-track{position:relative;display:flex;align-items:flex-end;gap:8px;list-style:none;width:max-content;min-width:100%;margin:0;padding:28px calc(var(--shelf-preview-width) + 18px) 116px 14px;isolation:isolate}
+.bookshelf-track{position:relative;display:flex;align-items:flex-end;gap:8px;list-style:none;width:max-content;min-width:100%;margin:0;padding:28px calc(var(--shelf-gutter,174px) + 18px) 116px 14px;isolation:isolate}
 .bookshelf-track:after{content:"";position:absolute;z-index:-1;left:0;right:0;bottom:102px;height:15px;border-top:1px solid rgba(var(--ink-rgb),.2);border-bottom:3px solid rgba(var(--ink-rgb),.12);border-radius:3px;background:linear-gradient(var(--card),rgba(var(--ink-rgb),.08));box-shadow:0 10px 16px -10px rgba(var(--ink-rgb),.34)}
 .shelf-book{--spine-bg:var(--cover-bg,var(--accent));position:relative;flex:0 0 var(--spine-width);width:var(--spine-width);height:var(--spine-height);perspective:700px}
 .shelf-book:nth-child(3n+2){--spine-bg:color-mix(in srgb,var(--cover-bg,var(--accent)) 86%,var(--card))}
 .shelf-book:nth-child(3n){--spine-bg:color-mix(in srgb,var(--cover-bg,var(--accent)) 88%,var(--ink))}
-.shelf-spine{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%;margin:0;padding:20px 4px 28px;isolation:isolate;border:1px solid rgba(0,0,0,.12);border-radius:4px 3px 2px 2px;color:var(--cover-ink,var(--onaccent));background:linear-gradient(90deg,rgba(255,255,255,.12),transparent 14%,transparent 73%,rgba(0,0,0,.18)),var(--spine-bg);font:inherit;cursor:pointer;box-shadow:3px 2px 6px rgba(var(--ink-rgb),.16),inset 2px 0 1px rgba(255,255,255,.13);transform-origin:left center;transition:transform .28s ease,box-shadow .28s ease}
+.shelf-spine{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%;margin:0;padding:20px 4px 28px;isolation:isolate;border:0;border-radius:4px 0 0 2px;color:var(--cover-ink,var(--onaccent));background:linear-gradient(90deg,rgba(255,255,255,.12),transparent 14%,transparent 73%,rgba(0,0,0,.18)),var(--spine-bg);font:inherit;cursor:pointer;box-shadow:3px 2px 6px rgba(var(--ink-rgb),.16),inset 2px 0 1px rgba(255,255,255,.13);transform-origin:right center;transition:transform .28s ease,box-shadow .28s ease}
 .shelf-spine:before,.shelf-spine:after{content:"";position:absolute;left:6px;right:6px;height:3px;border-top:1px solid var(--cover-rule,currentColor);border-bottom:1px solid var(--cover-rule,currentColor);opacity:.65}
 .shelf-spine:before{top:10px}.shelf-spine:after{bottom:10px}
 .shelf-spine:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
@@ -15,9 +15,9 @@
 .shelf-spine-title{font-family:'Newsreader',Georgia,serif;font-weight:500;font-size:16px;line-height:1.05;letter-spacing:.02em}
 .shelf-spine-author{font-size:10px;line-height:1.15;opacity:.86}
 .shelf-spine-language{position:absolute;bottom:17px;left:0;right:0;text-align:center;font:9px system-ui,sans-serif;letter-spacing:.1em;opacity:.8}
-.shelf-preview{position:absolute;left:calc(var(--spine-width) - 8px);top:0;z-index:2;width:var(--shelf-preview-width);visibility:hidden;opacity:0;pointer-events:none;transform:translate(-14px,0) rotateY(-18deg);transform-origin:left center;transition:opacity .22s ease,transform .28s ease,visibility .22s;filter:drop-shadow(3px 10px 12px rgba(var(--ink-rgb),.15))}
-.shelf-preview-cover{height:var(--spine-height);border-radius:3px 5px 5px 3px;overflow:hidden;background:var(--cover-bg,var(--accent))}
-.shelf-preview-cover>.cover{width:100%;height:100%;aspect-ratio:auto!important;padding:16px 13px!important;border-radius:3px 5px 5px 3px;box-shadow:inset 4px 0 4px rgba(0,0,0,.12)}
+.shelf-preview{position:absolute;left:calc(var(--spine-width) - 1px);top:0;z-index:2;width:var(--shelf-preview-width);visibility:hidden;opacity:0;pointer-events:none;transform:translateY(0) rotateY(-78deg);transform-origin:left center;transition:opacity .22s ease,transform .28s ease,visibility .22s;filter:drop-shadow(3px 10px 12px rgba(var(--ink-rgb),.15))}
+.shelf-preview-cover{height:var(--spine-height);border-radius:0 5px 5px 0;overflow:hidden;background:var(--cover-bg,var(--accent))}
+.shelf-preview-cover>.cover{width:100%;height:100%;aspect-ratio:auto!important;padding:16px 13px!important;border-radius:0 5px 5px 0;box-shadow:inset 4px 0 4px rgba(0,0,0,.12)}
 .shelf-preview-cover .cover img.cv{object-fit:contain}
 .shelf-preview-cover .c-title{font-size:21px!important;overflow-wrap:anywhere}
 .shelf-preview-cover .c-author{font-size:13px}
@@ -27,12 +27,12 @@
 .shelf-preview-author{font-size:12px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;color:var(--muted);margin-top:3px}
 .shelf-preview-meta{font-size:11px;color:var(--muted);margin-top:5px}
 .shelf-book:focus-within{z-index:5}
-.shelf-book:focus-within .shelf-preview{visibility:visible;opacity:1;pointer-events:none;transform:translate(0,-10px) rotateY(0)}
-.shelf-book:focus-within .shelf-spine{transform:translate(-2px,-10px) rotateY(-24deg);box-shadow:5px 10px 13px rgba(var(--ink-rgb),.2)}
+.shelf-book:focus-within .shelf-preview{visibility:visible;opacity:1;pointer-events:none;transform:translateY(-10px) rotateY(0)}
+.shelf-book:focus-within .shelf-spine{transform:translateY(-10px) rotateY(-24deg);box-shadow:5px 10px 13px rgba(var(--ink-rgb),.2)}
 @media(hover:hover) and (pointer:fine){
   .shelf-book:hover{z-index:6}
-  .shelf-book:hover .shelf-preview{visibility:visible;opacity:1;pointer-events:none;transform:translate(0,-10px) rotateY(0)}
-  .shelf-book:hover .shelf-spine{transform:translate(-2px,-10px) rotateY(-24deg);box-shadow:5px 10px 13px rgba(var(--ink-rgb),.2)}
+  .shelf-book:hover .shelf-preview{visibility:visible;opacity:1;pointer-events:none;transform:translateY(-10px) rotateY(0)}
+  .shelf-book:hover .shelf-spine{transform:translateY(-10px) rotateY(-24deg);box-shadow:5px 10px 13px rgba(var(--ink-rgb),.2)}
 }
 @media(max-width:420px){
   .bookshelf{--shelf-preview-width:158px}

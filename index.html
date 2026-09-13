@@ -77,10 +77,6 @@ main{max-width:1180px;margin:0 auto;padding:0 28px 90px}
 .lib-btn{display:flex;align-items:center;gap:8px;border-radius:10px;padding:11px 18px;font-family:'EB Garamond',serif;font-size:16px;cursor:pointer;transition:all .22s}
 .lib-btn:hover{transform:translateY(-2px)}
 .numin{border:1px solid rgba(var(--ink-rgb),.24);background:var(--bg);border-radius:8px;padding:6px 9px;font-size:15px;color:var(--ink);outline:none;text-align:center}
-.quote-card{max-width:620px;margin:30px auto 6px;padding:26px 30px;background:var(--card);border:1px solid rgba(var(--ink-rgb),.14);border-left:3px solid var(--accent);border-radius:12px;text-align:left;box-shadow:0 6px 20px rgba(var(--ink-rgb),.07);animation:fadeIn .6s ease both}
-.quote-label{font-size:12.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
-.quote-text{font-family:'Newsreader',serif;font-style:italic;font-size:clamp(18px,2.4vw,22px);line-height:1.5;color:var(--ink);margin:0}
-.quote-author{font-size:15px;color:var(--faint);margin-top:14px;font-style:normal}
 .notice{background:var(--card);border:1px solid rgba(176,133,59,.4);border-left:3px solid var(--gold);border-radius:10px;padding:12px 16px;color:var(--notice);font-size:14.5px;margin:0 0 24px}
 .desc{font-size:19px;line-height:1.72;color:var(--desc);margin:0 0 22px;max-width:62ch;white-space:pre-line}
 .rcard{background:var(--card);border:1px solid rgba(var(--ink-rgb),.16);border-radius:12px;padding:17px 18px}
@@ -132,14 +128,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,la
  #main div[style*="min-width:300px"],#main div[style*="min-width:240px"]{min-width:0!important;flex-basis:100%!important}
  .filters label{min-width:100%;width:100%}
  .detail-cover{width:180px!important;margin:auto!important}
- .quote-card{padding:18px 20px}
 }
 @media(max-width:420px){.hdr-in nav>.nav-btn[data-action="home"]{display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
-<link rel="stylesheet" href="theme-palette.css?v=20260913-2">
-<link rel="stylesheet" href="reader-tools.css?v=20260913-2">
-<link rel="stylesheet" href="bookshelf.css?v=20260913-2">
+<link rel="stylesheet" href="theme-palette.css?v=20260913-3">
+<link rel="stylesheet" href="reader-tools.css?v=20260913-3">
+<link rel="stylesheet" href="bookshelf.css?v=20260913-3">
 </head>
 <body>
 <a class="skip-link" href="#main">Přeskočit na obsah</a>
@@ -169,14 +164,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,la
 <dialog id="readerDialog" aria-labelledby="dialogTitle"></dialog>
 <div id="toastHost" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=20260913-2"></script>
-<script src="book-core.js?v=20260913-2"></script>
-<script src="catalogue-data.js?v=20260913-2"></script>
-<script src="catalogue-client.js?v=20260913-2"></script>
-<script src="qrcodegen.js?v=20260913-2"></script>
-<script src="library-tools.js?v=20260913-2"></script>
-<script src="bookshelf.js?v=20260913-2"></script>
-<script src="theme-palette.js?v=20260913-2"></script>
+<script src="config.js?v=20260913-3"></script>
+<script src="book-core.js?v=20260913-3"></script>
+<script src="catalogue-data.js?v=20260913-3"></script>
+<script src="catalogue-client.js?v=20260913-3"></script>
+<script src="qrcodegen.js?v=20260913-3"></script>
+<script src="library-tools.js?v=20260913-3"></script>
+<script src="bookshelf.js?v=20260913-3"></script>
+<script src="theme-palette.js?v=20260913-3"></script>
 <script>
 var Core = window.BookCore;
 (function(){
@@ -261,7 +256,7 @@ var state = {
   results:[], rawResults:[], shown:24, searchLoading:false, offlineSearch:false, searchFailed:0, searchTotal:0,
   filters:{year:'all',language:'all',sort:'smart'}, discovery:'modern', featuredFailed:0, storageError:'', returnView:'home',
   featured:[], featuredLoading:true, offlineFeatured:false,
-  lib:{}, quote:null, toast:null, _lastError:null, _focusHeader:false, _fromHero:false
+  lib:{}, toast:null, _lastError:null, _focusHeader:false, _fromHero:false
 };
 var toastTimer=null, searchTimer=null, searchSeq=0, detailSeq=0;
 
@@ -328,12 +323,6 @@ function refreshFeatured(force){
     state.featured=featuredBooks(r.books);state.offlineFeatured=r.total>0&&r.failed===r.total;state.featuredFailed=r.failed;state.featuredIssues=r.issues||[];state.featuredLoading=false;
     if(state.view==='home')renderMain();
   }).catch(function(){if(seq!==featuredSeq)return;state.featured=featuredBooks([]);state.offlineFeatured=true;state.featuredLoading=false;if(state.view==='home')renderMain();});
-}
-
-/* ============ denní citát ============ */
-function loadQuote(){
-  // Stable Czech editorial text: no random English quote or uncertain attribution.
-  state.quote={q:'Další oblíbený příběh může začít jedinou stránkou.',a:'Za Obálkou'};
 }
 
 /* ============ knihovna ============ */
@@ -465,6 +454,20 @@ function spineImageHTML(b){
   var fallbacks=Core.coverCandidates(b,known,false).filter(function(url){return url!==source;});
   return '<img class="cv" src="'+attr(source)+'" data-spine-original="true" data-cover-fallbacks="'+attr(JSON.stringify(fallbacks))+'" alt="" loading="lazy">';
 }
+// Keep the whole jacket at its native aspect ratio, meeting the spine at one hinge.
+function fitShelfCover(img){
+  if(!img||img.tagName!=='IMG'||img.hasAttribute('data-spine-original'))return;
+  var book=img.closest('.shelf-book');if(!book)return;
+  var front=book.querySelector('.shelf-preview-cover img');
+  if(front&&front.naturalWidth&&front.naturalHeight)img=front;
+  var height=parseFloat(book.style.getPropertyValue('--spine-height'));
+  if(!height||!img.naturalWidth||!img.naturalHeight)return;
+  var width=height*img.naturalWidth/img.naturalHeight;
+  book.style.setProperty('--shelf-preview-width',width+'px');
+  var shelf=book.closest('.bookshelf');
+  if(shelf&&width>Math.max(174,parseFloat(shelf.style.getPropertyValue('--shelf-gutter'))||0))shelf.style.setProperty('--shelf-gutter',width+'px');
+}
+document.addEventListener('load',function(event){fitShelfCover(event.target);},true);
 document.addEventListener('error',function(event){
   var img=event.target;if(!img||img.tagName!=='IMG'||!img.hasAttribute('data-cover-fallbacks'))return;
   var urls;try{urls=JSON.parse(img.getAttribute('data-cover-fallbacks'));}catch(e){urls=[];}
@@ -525,17 +528,12 @@ function sourceStatus(issues){return issues&&issues.length?'<details class="sour
 
 function homeHTML(){
   var reading=shelf('reading');
-  var quote = state.quote
-    ? '<div class="quote-card"><div class="quote-label">Mezi příběhy</div><p class="quote-text">„'+esc(state.quote.q)+'“</p>'
-      + (state.quote.a?'<div class="quote-author">— '+esc(state.quote.a)+'</div>':'') +'</div>'
-    : '';
   var heroTags=MOODS.slice(0,7).map(function(m,i){return '<button class="tag-chip" data-action="mood" data-mood="'+i+'">'+esc(m.label)+'</button>';}).join('');
   var h='<div style="animation:fadeIn .45s ease both">'
     +'<section style="padding:60px 0 32px;text-align:center;max-width:760px;margin:0 auto">'
     +'<div style="font-size:15px;letter-spacing:.32em;text-transform:uppercase;color:var(--accent);margin-bottom:22px">Tvá příští kapitola čeká</div>'
     +'<h1 style="font-family:\'Newsreader\',serif;font-weight:400;font-size:clamp(42px,7vw,72px);line-height:1.04;margin:0 0 22px;letter-spacing:-.01em">Najdi svůj další <span style="font-style:italic;color:var(--accent)">příběh</span>.</h1>'
     +'<p style="font-size:clamp(17px,2.4vw,20px);line-height:1.6;color:var(--muted);margin:0 auto 0;max-width:540px">Současné příběhy, young adult i romantasy. Najdi oblíbeného autora nebo zkombinuj nálady a objev něco nového.</p>'
-    + quote
     +'<div class="hsearch-wrap" style="border-width:1.5px;padding:13px 22px;max-width:520px;margin:24px auto 0;box-shadow:0 8px 28px rgba(var(--ink-rgb),.08)">'
     +'<span style="color:var(--faint);display:flex"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg></span>'
     +'<input id="herosearch" aria-label="Najdi knihu" maxlength="200" type="search" placeholder="Začni psát název…" autocomplete="off" style="font-size:19px" value="'+attr(state.query)+'">'
@@ -839,6 +837,7 @@ function renderMain(){
   else if(state.view==='library') html=libraryHTML();
   else html=homeHTML();
   el('main').innerHTML=(state.storageError?'<div class="notice" role="alert">'+esc(state.storageError)+' <button class="tag-chip" data-action="exportRaw">Stáhnout původní data</button> <button class="tag-chip" data-action="export">Záloha aktuální knihovny</button></div>':'')+html;
+  document.querySelectorAll('.shelf-book img').forEach(function(img){if(img.complete)fitShelfCover(img);});
   if(inputFocus){var target=document.querySelector('[data-action="'+inputFocus.action+'"][data-id="'+CSS.escape(inputFocus.id)+'"]');if(target)target.focus();}
   document.querySelectorAll('[data-action="page"]').forEach(function(x){x.setAttribute('aria-label','Aktuální strana');});
   document.querySelectorAll('[data-action="total"]').forEach(function(x){x.setAttribute('aria-label','Celkový počet stran');});
@@ -913,7 +912,6 @@ window.addEventListener('storage',function(e){if(e.key==='mzr_lib_v2'){state.sto
 /* ============ start ============ */
 initTheme();
 loadLib();
-loadQuote();
 updateBadge();
 refreshFeatured();
 routeFromHash();
