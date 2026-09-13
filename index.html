@@ -134,12 +134,12 @@ select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(v
 @media(max-width:420px){.hdr-in nav>.nav-btn[data-action="home"]{display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
-<link rel="stylesheet" href="theme-palette.css?v=20260913-9">
-<link rel="stylesheet" href="reader-tools.css?v=20260913-9">
-<link rel="stylesheet" href="bookshelf.css?v=20260913-9">
-<link rel="stylesheet" href="polish.css?v=20260913-9">
-<link rel="stylesheet" href="appearance.css?v=20260913-9">
-<link rel="stylesheet" href="realism.css?v=20260913-9">
+<link rel="stylesheet" href="theme-palette.css?v=20260913-10">
+<link rel="stylesheet" href="reader-tools.css?v=20260913-10">
+<link rel="stylesheet" href="bookshelf.css?v=20260913-10">
+<link rel="stylesheet" href="polish.css?v=20260913-10">
+<link rel="stylesheet" href="appearance.css?v=20260913-10">
+<link rel="stylesheet" href="realism.css?v=20260913-10">
 </head>
 <body>
 <a class="skip-link" href="#main">Přeskočit na obsah</a>
@@ -174,18 +174,18 @@ select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(v
 <dialog id="readerDialog" aria-labelledby="dialogTitle"></dialog>
 <div id="toastHost" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=20260913-9"></script>
-<script src="book-core.js?v=20260913-9"></script>
-<script src="catalogue-data.js?v=20260913-9"></script>
-<script src="catalogue-cs.js?v=20260913-9"></script>
-<script src="goodreads-catalogue.js?v=20260913-9"></script>
-<script src="goodreads-client.js?v=20260913-9"></script>
-<script src="catalogue-client.js?v=20260913-9"></script>
-<script src="qrcodegen.js?v=20260913-9"></script>
-<script src="library-tools.js?v=20260913-9"></script>
-<script src="bookshelf.js?v=20260913-9"></script>
-<script src="appearance.js?v=20260913-9"></script>
-<script src="realism-scene.js?v=20260913-9"></script>
+<script src="config.js?v=20260913-10"></script>
+<script src="book-core.js?v=20260913-10"></script>
+<script src="catalogue-data.js?v=20260913-10"></script>
+<script src="catalogue-cs.js?v=20260913-10"></script>
+<script src="goodreads-catalogue.js?v=20260913-10"></script>
+<script src="goodreads-client.js?v=20260913-10"></script>
+<script src="catalogue-client.js?v=20260913-10"></script>
+<script src="qrcodegen.js?v=20260913-10"></script>
+<script src="library-tools.js?v=20260913-10"></script>
+<script src="bookshelf.js?v=20260913-10"></script>
+<script src="appearance.js?v=20260913-10"></script>
+<script src="realism-scene.js?v=20260913-10"></script>
 <script>
 var Core = window.BookCore;
 (function(){
@@ -781,7 +781,7 @@ function libraryHTML(){
   h+='<div class="toolbar" aria-label="Zobrazení knihovny"><button class="tag-chip" data-action="libraryView" data-mode="shelf" aria-pressed="'+(state.libraryView==='shelf')+'">Poličky</button><button class="tag-chip" data-action="libraryView" data-mode="overview" aria-pressed="'+(state.libraryView==='overview')+'">Přehled a pokrok</button></div>';
   if(state.libraryView==='shelf'){
     h+='<p class="book-meta shelf-help">Najeď na hřbet pro náhled přebalu. Kliknutím nebo klepnutím na hřbet otevřeš knihu.</p>';
-    [['Rozečtené',reading,'reading'],['Chci přečíst',want,'want'],['Přečtené',read,'read']].forEach(function(group){
+    [['Rozečtené',reading,'reading'],['Chci přečíst',want,'want'],['Přečtené',read,'read']].sort(function(a,b){return isRealism()?Number(!a[1].length)-Number(!b[1].length):0;}).forEach(function(group){
       if(group[1].length||isRealism())h+='<section class="shelf-section'+(!group[1].length?' is-empty':'')+'"><h2>'+group[0]+' <span>'+group[1].length+'</span></h2>'+BookShelf.render(group[1],{esc:esc,attr:attr,coverHTML:coverHTML,spineImageHTML:spineImageHTML,status:group[2]})+'</section>';
     });
     return h+'</div>';

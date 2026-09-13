@@ -288,3 +288,21 @@ body[data-realism="true"] .room-navigation[hidden]{display:none}
   body[data-realism="true"] .room-scene>.room-navigation{left:50%;max-width:calc(100vw - 24px)}
   body[data-realism="true"] .detail-info{padding:24px 17px 30px}
 }
+/* The library's title and tools share one continuous paper, with no stacked strips. */
+body[data-realism="true"] .library-page>h1,
+body[data-realism="true"] .library-page>h1+p,
+body[data-realism="true"] .library-page>.toolbar,
+body[data-realism="true"] .library-page>.book-meta{width:100%;max-width:660px;margin:0!important;padding:10px 24px;background:var(--real-paper);background-image:var(--real-paper-grain);border:0;border-radius:0;box-shadow:none}
+body[data-realism="true"] .library-page>h1{padding:22px 24px 6px;font-size:42px!important;line-height:1.1!important;border-radius:2px 2px 0 0}
+body[data-realism="true"] .library-page>h1+p{padding:0 24px 8px;font-size:16px!important}
+body[data-realism="true"] .library-page>.toolbar{gap:8px;padding:8px 24px}
+body[data-realism="true"] .library-page>.book-meta{padding:0 24px 9px;font-size:13px}
+body[data-realism="true"] .library-page>.shelf-help{padding-bottom:20px;border-radius:0 0 2px 2px;box-shadow:0 9px 14px rgba(15,8,2,.18)}
+body[data-realism="true"] .detail-layout:after{background:none;color:#78664b;text-shadow:0 1px 0 rgba(255,255,255,.3)}
+@media(max-width:600px), (max-width:1000px) and (max-aspect-ratio:1/1){
+  body[data-realism="true"] .library-page>h1{padding:21px 18px 7px;font-size:36px!important}
+  body[data-realism="true"] .library-page>h1+p,
+  body[data-realism="true"] .library-page>.toolbar,
+  body[data-realism="true"] .library-page>.book-meta{padding-left:18px;padding-right:18px}
+  body[data-realism="true"] .library-page>.toolbar .tag-chip{min-height:42px}
+}
