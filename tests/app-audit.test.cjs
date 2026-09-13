@@ -9,6 +9,7 @@ const CatalogueData=require('../catalogue-data.js');
 const LibraryTools=require('../library-tools.js');
 const BookShelf=require('../bookshelf.js');
 const Appearance=require('../appearance.js');
+const RoomRecommendations=require('../recommendations.js');
 const source=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8').match(/<script>\n([\s\S]*?)<\/script>/)[1];
 const ID='seed:9788025359037';
 const settle=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
@@ -60,7 +61,7 @@ function boot({storage={},failWrites=false,client={},libraryTools={},appearance=
   const empty=()=>Promise.resolve({books:[],failed:0,total:1,issues:[]});
   const catalogue={featured:empty,search(q,f){requests.push({type:'search',query:q,filters:f});return empty();},
     tags(tags,f){requests.push({type:'tags',tags,filters:f});return empty();},detail:b=>Promise.resolve(b),getCachedRatings:b=>b,...client};
-  const window={BookCore:Core,CatalogueData,LibraryTools:{...LibraryTools,...libraryTools},BookShelf,CatalogueClient:catalogue,location,
+  const window={BookCore:Core,CatalogueData,LibraryTools:{...LibraryTools,...libraryTools},BookShelf,RoomRecommendations,CatalogueClient:catalogue,location,
     history:{pushState(_a,_b,url){location.href=new URL(url,location).href;}},
     scrollTo(){},matchMedia:()=>({matches:false}),addEventListener(name,fn){listen(windowEvents,name,fn);}};
   if(appearance){
@@ -232,16 +233,17 @@ test('room search submits the current text and retains edition filters through l
   assert.deepEqual(Array.from(a.state.results,book=>book.id),[good.id]);
 });
 
-test('each of the six room recommendations opens the actual featured edition',async()=>{
+test('each of the six room recommendations opens the actual selected edition and survives returning home',async()=>{
   const a=boot({appearance:true,storage:{za_realism:'true'}});await settle();
   const visible=roomBookIds(a);assert.equal(visible.length,6);
-  assert.deepEqual(visible,Array.from(a.state.featured.slice(0,6),book=>book.id));
+  assert.deepEqual(visible,Array.from(a.state.roomBooks,book=>book.id));
   for(const id of visible){
-    const expected=a.state.featured.find(book=>book.id===id);assert(expected);
+    const expected=a.state.roomBooks.find(book=>book.id===id);assert(expected);
     a.click('open',{'data-id':id});await settle();
     assert.equal(a.state.view,'detail');assert.equal(a.state.detail.id,expected.id);
     assert.equal(a.state.detail.title,expected.title);assert.equal(a.state.detail.language,expected.language);
     a.click('home');await settle();
+    assert.deepEqual(roomBookIds(a),visible);
   }
   assert.equal(Object.keys(a.state.lib).length,0,'Looking at a recommendation must not save it to the library.');
 });
@@ -261,16 +263,47 @@ test('realism keeps all three physical shelves empty until books are added, whil
   assert.deepEqual(shelfLabels(),['Rozečtené']);assert.equal(a.state.lib[ID].status,'reading');
 });
 
-test('the room next control visits actual featured books without repeating the first row and wraps after the last page',async()=>{
-  const a=boot({appearance:true,storage:{za_realism:'true'}});await settle();
-  const featured=Array.from(a.state.featured,book=>book.id);assert(featured.length>6);
-  const first=roomBookIds(a),seen=[...first];
-  for(let page=1;page<Math.ceil(featured.length/6);page++){
-    a.click('roomNext');await settle();const visible=roomBookIds(a);
-    assert.deepEqual(visible,featured.slice(page*6,page*6+6));assert.notDeepEqual(visible,first);seen.push(...visible);
+test('room Next draws six new works from the full live catalogue, beyond the ordinary eighteen cards',async()=>{
+  let resolveFeatured;
+  const remote=Array.from({length:50},(_,i)=>({id:'room:remote'+i,title:'New catalogue story '+i,author:'Writer '+i,year:2025,language:'en',tags:['fantasy']}));
+  const a=boot({appearance:true,storage:{za_realism:'true'},client:{featured(){return new Promise(resolve=>{resolveFeatured=resolve;});}}});
+  const first=roomBookIds(a);
+  resolveFeatured({books:remote,failed:0,total:1,issues:[]});await settle();
+  assert.deepEqual(roomBookIds(a),first,'Late catalogue data must not replace books under the pointer.');
+  assert(a.state.featured.length<=18);assert(a.state.roomPool.length>=50);
+  const ordinaryIds=new Set(a.state.featured.map(b=>b.id)),seen=new Set(first);let previous=first,outside;
+  for(let draw=0;draw<5;draw++){
+    a.click('roomNext');await settle();const row=roomBookIds(a);
+    assert.equal(row.length,6);assert.equal(new Set(row).size,6);
+    assert(row.every(id=>!previous.includes(id)),'Enough unseen works exist to replace the entire row.');
+    row.forEach(id=>seen.add(id));previous=row;
+    outside=outside||a.state.roomBooks.find(b=>remote.some(r=>r.id===b.id)&&!ordinaryIds.has(b.id));
   }
-  assert.deepEqual(seen,featured);a.click('roomNext');await settle();assert.deepEqual(roomBookIds(a),first);
-  assert.equal(a.state.view,'home');assert.equal(Object.keys(a.state.lib).length,0);
+  assert(seen.size>18);assert(outside,'Recommendations outside the old fixed selection must be reachable.');
+  a.click('open',{'data-id':outside.id});await settle();assert.equal(a.state.detail.id,outside.id);
+  assert.equal(a.state.detail.title,outside.title);assert.equal(Object.keys(a.state.lib).length,0);
+});
+
+test('taste browsing is bounded and outages leave Next usable without writing the reading library',async()=>{
+  const calls=[];
+  const a=boot({appearance:true,client:{tags(tags){calls.push(['tags',...tags]);return Promise.reject(new Error('offline'));},search(author){calls.push(['author',author]);return Promise.reject(new Error('offline'));}}});
+  await settle();a.click('status',{'data-id':ID,'data-status':'read'});
+  const saved=a.store.mzr_lib_v2;
+  appearanceNode(a,'appearanceRealism').click();await settle();await settle();
+  assert(calls.some(c=>c[0]==='tags'));assert(calls.some(c=>c[0]==='author'));assert(calls.length<=3);
+  const count=calls.length;
+  for(let i=0;i<8;i++){a.click('roomNext');await settle();assert.equal(roomBookIds(a).length,6);assert(!a.state.roomBooks.some(b=>Core.sameWork(b,a.state.lib[ID].book)));}
+  assert.equal(calls.length,count,'Next must reuse the catalogue batch, not issue requests every click.');
+  assert.equal(a.store.mzr_lib_v2,saved);
+});
+
+test('a superseded taste request cannot change the new discovery pool or selected row',async()=>{
+  let resolveOld,tagCalls=0;
+  const a=boot({appearance:true,client:{tags(){if(++tagCalls===1)return new Promise(resolve=>{resolveOld=resolve;});return Promise.resolve({books:[]});}}});
+  await settle();a.click('status',{'data-id':ID,'data-status':'read'});appearanceNode(a,'appearanceRealism').click();await settle();
+  a.click('discover',{'data-mode':'ya'});await settle();const row=roomBookIds(a);
+  resolveOld({books:[{id:'old:taste',title:'Stale request book',author:'Old query',year:2025,tags:['fantasy']}]});await settle();
+  assert(!a.state.roomPool.some(b=>b.id==='old:taste'));assert.deepEqual(roomBookIds(a),row);
 });
 
 test('the same appearance picker and its working controls survive every scene replacement',async()=>{
